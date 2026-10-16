@@ -218,14 +218,10 @@ const WORK_SNAPSHOT = `,담당자,배정 건수,접수 건수,접수율,보정 �
 * 정의
 1) 적체: 사건이 담당자에게 배정되었으나 2개월 이상 법원에 접수되지 못하고 대기/지연되고 있는 미접수 사건 건수입니다.
 2) 진행: 현재 각 담당자가 실제로 전담하여 수행 및 처리 중인 사건 수입니다.
-3) 긴급보정: 보정 유형 '명변', '이의', '기타' 및 기한 초과(제출 마감일 경과) 건을 제외하고, 법원 송달문서 제출 기한이 오늘부터 3일 이하로 임박한 송달 문서의 건수입니다.",,,,,,,,,,,,,,,
-,4. 김정석 개인 업무 성과 대시보드,,,,,,,,,,,,,,,
-,현재 진행 중인 사건 수,,접수,,개시,,인가,,그외,,,,,,,
-,61,,53,,26,,15,,3,,,,,,,
-,사건당 평균 보정 횟수,,평균 소요 기간(일),,개시율,,인가율,,,,,,,,,
-,3,,63.4,,25.9%,,7.0%,,,,,,,,,`;
+3) 긴급보정: 보정 유형 '명변', '이의', '기타' 및 기한 초과(제출 마감일 경과) 건을 제외하고, 법원 송달문서 제출 기한이 오늘부터 3일 이하로 임박한 송달 문서의 건수입니다.",,,,,,,,,,,,,,,`;
 
 /* ===== 공통 도구 ===== */
+const HIDE_NAMES=["기타","전명일"];   // 화면에서 제외할 담당자
 const STATUS=["심각","과중","적정","여유"];
 const RULE={심각:"부하 130% 이상",과중:"부하 110%~130%",적정:"부하 80%~110%",여유:"부하 80% 미만"};
 const ACTION={심각:"신규 배정 즉시 중단 및 보정 업무 긴급 지원",과중:"업무량 실시간 모니터링 및 추가 배정 억제",적정:"표준 업무 사이클 및 현재 배정 비율 유지",여유:"신규 사건 우선 배정 및 보정 이관 수용"};
@@ -364,19 +360,21 @@ function lineChart(labels,series){
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="담당자별 월별 배정 추이">${g}</svg><div class="legend">${series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`;
 }
+const TREND_HIDE=HIDE_NAMES;
 function initTrend(h){
-  const rows=h.rows.filter(r=>sum(r.v)>0);
-  const totals=h.names.map((n,j)=>sum(rows.map(r=>r.v[j])));
-  const top3=[...h.names.keys()].sort((a,b)=>totals[b]-totals[a]).slice(0,3);
-  TREND={h,rows,sel:new Set(top3)};
+  const idx=h.names.map((n,j)=>j).filter(j=>!TREND_HIDE.includes(h.names[j]));
+  const rows=h.rows.filter(r=>sum(idx.map(j=>r.v[j]))>0);
+  const totals=Object.fromEntries(idx.map(j=>[j,sum(rows.map(r=>r.v[j]))]));
+  const top3=[...idx].sort((a,b)=>totals[b]-totals[a]).slice(0,3);
+  TREND={h,rows,idx,sel:new Set(top3)};
   const box=document.getElementById("trend-chips");if(!box)return;
-  box.innerHTML=h.names.map((n,j)=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(n)}</button>`).join("");
+  box.innerHTML=idx.map(j=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(h.names[j])}</button>`).join("");
   box.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;TREND.sel.has(j)?TREND.sel.delete(j):TREND.sel.add(j);b.setAttribute("aria-pressed",TREND.sel.has(j));drawTrend()});
   drawTrend();
 }
 function drawTrend(){
-  const {h,rows,sel}=TREND,el=document.getElementById("trend-chart");if(!el)return;
-  const avg=rows.map(r=>+(sum(r.v)/h.names.length).toFixed(1));
+  const {h,rows,idx,sel}=TREND,el=document.getElementById("trend-chart");if(!el)return;
+  const avg=rows.map(r=>+(sum(idx.map(j=>r.v[j]))/idx.length).toFixed(1));
   const series=[...sel].sort((a,b)=>a-b).map(j=>({name:h.names[j],vals:rows.map(r=>r.v[j]),color:PALETTE[j%PALETTE.length]}));
   series.push({name:"담당자 평균",vals:avg,color:"var(--sub)",dash:true});
   el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다.</span></div>';
@@ -406,14 +404,15 @@ function extractWork(text){
     people.push(rec);
   }
   let note="";for(const r of all)for(const v of r)if(v.includes("종합 체감 부하:")&&v.includes("정의"))note=v;
-  const pairs=[],title=all.map(r=>r.find(v=>/^4\./.test(v))).find(Boolean);
-  for(const key of ["현재 진행 중인 사건 수","사건당 평균 보정 횟수"]){
-    const i=all.findIndex(r=>r.includes(key));if(i<0||!all[i+1])continue;
-    all[i].forEach((v,j)=>{const val=all[i+1][j];if(v&&val)pairs.push([v,val])});
+  // 화면에서 제외할 담당자: 목록에서 빼고, 합계/평균은 남은 인원 기준으로 다시 계산
+  const kept=people.filter(p=>!HIDE_NAMES.includes(p.name));
+  if(total&&kept.length&&kept.length!==people.length){
+    const S=k=>sum(kept.map(p=>p[k])),M=k=>+(S(k)/kept.length).toFixed(1);
+    total={...total,assign:S("assign"),filed:S("filed"),fix:S("fix"),backlog:S("backlog"),active:S("active"),urgent:S("urgent"),fileRate:+(S("filed")/S("assign")*100).toFixed(1),open:M("open"),days:M("days"),load:M("load")};
   }
-  return {people,total,note,personal:pairs.length?{title:(title||"개인 업무 성과").replace(/^4\.\s*/,""),pairs}:null};
+  return {people:kept,total,note};
 }
-function workHTML({people,total,note,personal},stale){
+function workHTML({people,total,note},stale){
   const by=[...people].sort((a,b)=>b.load-a.load),t=total||{};
   const ICON={심각:"🚨",과중:"⚠️",적정:"✅",여유:"🔷"};
   const nrows=Math.max(...STATUS.map(x=>by.filter(p=>p.status===x).length),1)+1;
@@ -430,7 +429,6 @@ function workHTML({people,total,note,personal},stale){
   return `<h2>담당자별 업무 부하${stale?` <small class="flat" style="font-weight:400;font-size:13px">· 저장본(${SNAP_DATE} 기준)</small>`:""}</h2>
   <div class="kpis">${kpi("총 배정 건수",int(t.assign))}${kpi("접수율",(t.fileRate??"-")+"%")}${kpi("개시율",(t.open??"-")+"%")}${kpi("평균 소요기간",(t.days??"-")+"일")}${kpi("미접수 적체",int(t.backlog)+"건")}${kpi("긴급 보정",int(t.urgent)+"건")}${kpi("평균 체감 부하",(t.load??"-")+"%")}</div>
   <div class="gg">${groups}</div>${note?`<div class="gnote">${esc(note)}</div>`:""}
-  ${personal?`<h2>${esc(personal.title)}</h2><div class="kpis">${personal.pairs.map(([k,v])=>kpi(k,esc(v))).join("")}</div>`:""}
   <h2>담당자별 상세</h2><div class="panel">${table(["담당자","배정","접수","접수율","보정","개시율","소요(일)","적체","진행","긴급","체감 부하","상태"],trs)}</div>`;
 }
 
@@ -448,7 +446,7 @@ async function load(){
   try{html+=mainHTML2(D||extractMain(m.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
   if(D&&D.heat)initTrend(D.heat);
-  const st=x=>x.live?"실시간":"저장본("+SNAP_DATE+" 기준)";
+  const st=x=>x.live?"실시간":"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+x.err+")";
   meta.textContent="통합 데이터: "+st(m)+" · 업무 부하: "+st(w)+" · "+new Date().toLocaleString("ko-KR")+(m.live&&w.live?"":" — 연결하지 못한 항목은 저장된 값이며 시트가 바뀌어도 갱신되지 않습니다.");
 }
 document.getElementById("reload").onclick=load;
