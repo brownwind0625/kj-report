@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>업무 현황 리포트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#17212e;--sub:#657386;--line:#e1e6ed;--acc:#2456a6;--acc2:#2f9a7a;
+--up:#12805c;--down:#c43a31;--s-심각:#c43a31;--s-과중:#d98a14;--s-적정:#2f7d5b;--s-여유:#4b88b8;
+--h-심각:#c62828;--h-과중:#e07b1a;--h-적정:#1b7a3c;--h-여유:#2a6fdb;
+--f-심각:#b71c1c;--f-과중:#b25e0a;--f-적정:#17692f;--f-여유:#1f5fc4}
+@media (prefers-color-scheme:dark){:root{--bg:#0f141b;--card:#171e28;--ink:#e8edf3;--sub:#8f9cae;--line:#263040;--acc:#7fb0ff;--acc2:#4cc99a;
+--up:#4cc99a;--down:#ff7b72;--s-심각:#ff7b72;--s-과중:#f0b04a;--s-적정:#4cc99a;--s-여유:#6cb4e6;
+--f-심각:#ff8a80;--f-과중:#ffb74d;--f-적정:#6fdc9a;--f-여유:#7fb0ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 16px 64px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.meta{color:var(--sub);font-size:13px;max-width:720px}
+h2{font-size:18px;margin:34px 0 10px}
+h3{font-size:14px;margin:0 0 8px}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .k{font-size:12px;color:var(--sub)}.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.bars .row{display:grid;grid-template-columns:64px 1fr 130px;align-items:center;gap:10px;font-size:14px;padding:4px 0}
+.track{position:relative;height:16px;background:var(--bg);border-radius:4px}
+.fill{height:100%;border-radius:4px;background:var(--c,var(--acc))}
+.ref{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
+.row .n{text-align:right;color:var(--sub);font-size:13px}
+.legend{font-size:12px;color:var(--sub);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.badge{display:inline-block;font-size:12px;font-weight:500;padding:1px 8px;border-radius:99px;border:1px solid var(--c);color:var(--c)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+th{color:var(--sub);font-weight:500}
+tr.tot td{font-weight:700}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--sub)}
+.note{font-size:12.5px;color:var(--sub);white-space:pre-line}
+.msg{padding:30px;text-align:center;color:var(--sub)}
+svg{width:100%;height:auto;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chip[aria-pressed=true]{border-color:var(--c);box-shadow:0 0 0 1px var(--c)}
+.chip[aria-pressed=false]{opacity:.55}
+.cmp .row{grid-template-columns:64px 1fr 210px}
+.gg{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.g{--t:color-mix(in srgb,var(--h) 9%,var(--card));--t2:color-mix(in srgb,var(--h) 19%,var(--card));background:var(--t);border-right:2px solid var(--h);display:flex;flex-direction:column}
+.g:last-child{border-right:0}
+.gh{background:var(--h);color:#fff;font-weight:700;font-size:15px;text-align:center;padding:10px 6px}
+.gc{color:var(--f);font-weight:700;font-size:30px;text-align:center;padding:10px 0 12px}
+.gt{flex:1 1 auto;width:100%;border-collapse:collapse;font-size:12px;background:var(--card)}
+.gt th,.gt td{padding:6px 5px;text-align:center;border:1px solid var(--line);height:30px}
+.gt th{background:var(--t2);color:var(--f);font-weight:700}
+.gt td:first-child{text-align:left;font-weight:500}
+.gt td.ld{text-align:right;font-weight:700}
+.gt th:first-child,.gt td:first-child{position:static;background:inherit}
+.gt td:first-child{background:var(--card)}
+.gs{display:grid;grid-template-columns:1fr 1fr;font-size:12px;border-top:1px solid var(--line);background:var(--t)}
+.gs span,.gs b{padding:7px 6px;text-align:center}
+.gs span{font-weight:500;border-right:1px solid var(--line)}
+.ga{margin-top:auto;border-top:1px solid var(--line);color:var(--f);font-weight:700;font-size:12px;text-align:center;padding:10px 6px;background:var(--t)}
+.gnote{margin-top:10px;background:color-mix(in srgb,var(--ink) 7%,var(--card));border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:12.5px;line-height:1.75;white-space:pre-line;color:var(--f-심각)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>업무 현황 리포트</h1><div class="meta" id="meta">불러오는 중…</div></div>
+    <button id="reload">새로고침</button>
+  </header>
+  <div id="app"></div>
+</div>
+<script>
+/* ===== 설정 ===== */
+const CONFIG = {
+  // 통합 데이터 탭 (월별 실적, 담당자, 상담자, 법원)
+  mainUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=872690463&single=true&output=csv",
+  // 담당자별 업무 부하 표가 있는 탭 (게시되지 않으면 아래 저장본을 표시)
+  workUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=1570934634&single=true&output=csv"
+};
+const SNAP_DATE = "2026-10-15";
+
+/* ===== 저장본(연결 실패 시 표시) ===== */
+const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균,전체 개시율
+1월,125,110,980,98,43.7%
+2월,75,87,,,
+3월,91,133,,,
+4월,135,133,,,
+5월,88,112,,,
+6월,115,131,,,
+7월,112,149,,,
+8월,118,140,,,
+9월,91,110,,,
+10월,30,55,,,
+11월,0,0,,,
+12월,0,0,,,
+
+월 신청 소요 기간,22
+평균 개시 소요 기간,152
+평균 보정 횟수,5
+총 사건 처리 소요 기간,247
+
+구분,한예지,주혜인,이준서,류예지,김정석,곽정윤,전명일,최제현,노두환,박성희,서소라,기타,이지은
+1월,17,15,14,14,7,13,1,3,1,12,11,5,0
+2월,11,11,13,5,10,9,4,3,1,9,4,1,0
+3월,19,18,13,11,16,8,4,16,13,8,5,0,0
+4월,11,14,16,15,8,9,0,11,16,11,12,0,0
+5월,9,11,8,10,14,10,1,14,11,9,7,0,0
+6월,16,16,13,13,11,16,1,12,16,7,9,0,0
+7월,16,14,15,17,6,16,0,17,11,9,12,8,8
+8월,13,15,16,13,10,13,0,13,13,11,10,12,12
+9월,12,6,10,10,8,4,0,13,13,12,10,11,11
+10월,2,1,6,8,4,7,0,5,7,3,3,5,5
+11월,0,0,0,0,0,0,0,0,0,0,0,0,0
+12월,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+담당자,25년 전체,25년(1~9월),26년(1~9월),증감(건),증감률,25년 월평균,26년 월평균,26년 점유율,성과 추이,26년 예상,연간 증감(건),연간 증감률,연간 전망
+박성희,110,78,78,0,0.0%,8.7,8.7,8.0%,- 보합,104,-6,-5.5%,▼ 감소
+서소라,94,71,68,-3,-4.2%,7.9,7.6,6.9%,▼ 감소,91,-3,-3.2%,▼ 감소
+곽정윤,138,95,103,+8,+8.4%,10.6,11.4,10.5%,▲ 성장,137,-1,-0.7%,▼ 감소
+한예지,162,129,118,-11,-8.5%,14.3,13.1,12.0%,▼ 감소,157,-5,-3.1%,▼ 감소
+류예지,165,117,112,-5,-4.3%,13.0,12.4,11.4%,▼ 감소,149,-16,-9.7%,▼ 감소
+이준서,125,82,104,+22,+26.8%,9.1,11.6,10.6%,▲ 성장,139,+14,+11.2%,▲ 성장
+최제현,36,14,78,+64,+457.1%,1.6,8.7,8.0%,▲ 성장,104,+68,+188.9%,▲ 성장
+노두환,40,18,79,+61,+338.9%,2.0,8.8,8.1%,▲ 성장,105,+65,+162.5%,▲ 성장
+주혜인,156,114,128,+14,+12.3%,12.7,14.2,13.1%,▲ 성장,171,+15,+9.6%,▲ 성장
+김정석,2,0,83,+83,-,0.0,9.2,8.5%,▲ 성장,111,+109,+5450.0%,▲ 성장
+합계 / 평균,"1,028",718,951,+233,+32.5%,79.8,105.7,97.0%,▲ 성장,"1,268",+240,+23.3%,▲ 성장
+
+건수 (수임월),수임월
+상담자,2026-01,2026-02,2026-03,2026-04,2026-05,2026-06,2026-07,2026-08,2026-09,2026-10,총계
+김미경,,,21,28,20,30,21,28,20,9,177
+김민규,12,14,27,29,27,29,33,24,20,8,223
+김재홍,,,,,,,5,19,18,5,47
+심현철,,,2,13,15,16,20,15,15,7,103
+전지연,52,42,83,61,50,55,70,54,36,26,529
+총계,64,56,133,131,112,130,149,140,109,55,"1,079"
+
+건수,진행상황,,,,,,,,,,,,,,
+상담자,개시,기각,보류,사임,인가,접수 완료,접수 착수,취소(접수전),취하(개시전),파산면책,폐지신청(개시후),총계,,상담자,개시율
+기타,3,,,,1,3,,,,,,7,,전지연,23.8%
+김미경,36,1,5,3,6,92,17,7,,,,167,,김민규,21.6%
+김민규,46,5,4,6,19,98,23,10,2,,,213,,김미경,21.6%
+김재홍,3,,1,,,32,6,1,1,,,44,,김재홍,6.8%
+심현철,22,1,,1,1,52,11,3,1,,,92,,심현철,23.9%
+재신청,,,,,,1,,,,,,1,,,
+전지연,123,3,15,7,54,237,44,23,7,2,2,517,,상담자,월 평균 수임건
+정우은,22,,,2,25,20,3,5,2,2,,81,,전지연,45.4
+총계,255,10,25,19,106,535,104,49,13,4,2,1122,,김민규,14.9
+,,,,,,,,,,,,,,김미경,18.7
+,,,,,,,,,,,,,,정우은,42.1
+,,,,,,,,,,,,,,심현철,11.5
+,,,,,,,,,,,,,,김재홍,11.0
+
+법원,평균 개시소요기간,평균 보정소요기간,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월,총 접수 건수
+서울,107.7,29.9,39,25,27,40,26,37,37,42,30,16,0,0,319
+의정부,179.4,91.9,15,12,7,20,9,16,11,11,18,1,0,0,120
+인천,117.3,16.8,22,9,9,22,10,11,9,13,10,3,0,0,118
+수원,73.2,26.7,29,20,28,30,28,28,35,32,24,7,0,0,261
+춘천,67.3,30.2,0,0,1,2,1,0,0,1,0,0,0,0,5
+강릉,173.0,86.0,1,2,0,1,1,1,0,0,0,0,0,0,6
+대전,130.5,101.2,5,3,5,4,3,5,1,7,3,1,0,0,37
+청주,160.5,50.7,1,1,3,0,3,2,0,1,1,1,0,0,13
+대구,,94.8,2,2,1,7,1,6,3,3,1,0,0,0,26
+부산,130.8,7.5,3,0,2,1,3,4,2,2,1,0,0,0,18
+울산,,,0,0,0,0,0,0,0,0,0,0,0,0,0
+창원,93.5,3.6,0,0,1,0,0,0,2,0,2,0,0,0,5
+광주,75.5,17.9,3,0,2,5,2,5,9,3,0,1,0,0,30
+전주,159.3,54.1,4,1,2,1,1,0,0,3,0,0,0,0,12
+제주,209.0,17.3,0,0,2,2,0,0,0,0,0,0,0,0,4
+
+법원명,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월
+서울,"2,685","2,141","2,585","2,764","2,303","2,602","2,676","2,512",0,0,0,0,"20,268"
+의정부,991,750,977,"1,017",817,979,"1,048",956,0,0,0,0,"7,535"
+인천,"1,298",972,"1,289","1,371","1,090","1,259","1,304","1,187",0,0,0,0,"9,770"
+수원,"2,629","2,022","2,673","2,729","2,334","2,551","2,697","2,518",0,0,0,0,"20,153"
+춘천,289,218,282,305,249,334,344,299,0,0,0,0,"2,320"
+강릉,127,119,126,132,132,129,137,128,0,0,0,0,"1,030"
+대전,"1,259",967,"1,325","1,403","1,124","1,330","1,471","1,418",0,0,0,0,"10,297"
+청주,424,350,385,406,304,359,336,261,0,0,0,0,"2,825"
+대구,"1,173",827,"1,193","1,267",988,"1,217","1,344","1,230",0,0,0,0,"9,239"
+부산,"1,700","1,291","1,657","1,766","1,400","1,624","1,698","1,642",0,0,0,0,"12,778"
+울산,316,219,259,281,258,286,288,254,0,0,0,0,"2,161"
+창원,211,157,210,211,159,190,206,164,0,0,0,0,"1,508"
+광주,655,544,838,892,756,889,978,938,0,0,0,0,"6,490"
+전주,446,396,405,355,302,350,326,284,0,0,0,0,"2,864"
+제주,183,163,225,218,158,182,158,158,0,0,0,0,"1,445"
+`;
+
+const WORK_SNAPSHOT = `,담당자,배정 건수,접수 건수,접수율,보정 건수,사건당 보정,개시율,평균 소요기간,배정 점유율,배정 집중도(%),부하 상태,미접수 적체(2개월),진행 사건 수,긴급 보정(3일이하),종합 체감 부하(%),실질 업무 상태
+,한예지,126,110,87.3%,65,0.6,42.4%,133.3,11.0%,106.4%,적정,2,33,1,77.7%,여유
+,주혜인,121,116,95.9%,29,0.3,47.7%,157.1,10.5%,102.2%,적정,0,27,1,49.2%,여유
+,이준서,124,90,72.6%,47,0.5,47.1%,134.7,10.8%,104.7%,적정,5,28,2,124.5%,과중
+,류예지,116,96,82.8%,75,0.8,41.1%,151.4,10.1%,98.0%,적정,4,24,4,148.0%,심각
+,김정석,94,82,87.2%,35,0.4,45.8%,79.6,8.2%,79.4%,여유,1,12,0,24.2%,여유
+,곽정윤,105,86,81.9%,47,0.5,43.7%,169.3,9.2%,88.7%,적정,5,24,1,100.6%,적정
+,최제현,107,69,64.5%,53,0.8,47.4%,139.5,9.3%,90.4%,적정,6,19,2,125.5%,과중
+,노두환,102,75,73.5%,50,0.7,42.3%,141.6,8.9%,86.1%,적정,11,32,2,194.5%,심각
+,박성희,91,70,76.9%,57,0.8,47.4%,180.8,7.9%,76.9%,여유,7,31,2,149.6%,심각
+,서소라,83,60,72.3%,32,0.5,36.8%,170.7,7.2%,70.1%,여유,5,23,2,118.9%,과중
+,이지은,36,25,69.4%,13,0.5,16.0%,36.5,3.1%,30.4%,여유,3,12,0,46.0%,여유
+,기타,42,3,7.1%,3,1.0,0.0%,0.0,3.7%,35.5%,여유,0,1,0,1.1%,여유
+,합계 / 평균,"1,147",882,76.9%,506,0.6,38.1%,124.5,100.0%,80.7%,-,49,266,17,96.7%,-
+,,,,,,,,,,,,,,,,
+,"*  종합 체감 부하: =0.35*(적체/직원 평균 3.2건) + 0.3*(진행/직원 평균 26.4건) + 0.35*(긴급보정/직원 평균 3.0건)
+* 100%란, 직원 평균 수치입니다. 즉, 직원의 평균 업무 상태와 동일하게 일하고 있다면 종합 체감 부하는 정확히 100%가 됩니다.
+
+* 정의
+1) 적체: 사건이 담당자에게 배정되었으나 2개월 이상 법원에 접수되지 못하고 대기/지연되고 있는 미접수 사건 건수입니다.
+2) 진행: 현재 각 담당자가 실제로 전담하여 수행 및 처리 중인 사건 수입니다.
+3) 긴급보정: 보정 유형 '명변', '이의', '기타' 및 기한 초과(제출 마감일 경과) 건을 제외하고, 법원 송달문서 제출 기한이 오늘부터 3일 이하로 임박한 송달 문서의 건수입니다.",,,,,,,,,,,,,,,
+,4. 김정석 개인 업무 성과 대시보드,,,,,,,,,,,,,,,
+,현재 진행 중인 사건 수,,접수,,개시,,인가,,그외,,,,,,,
+,61,,53,,26,,15,,3,,,,,,,
+,사건당 평균 보정 횟수,,평균 소요 기간(일),,개시율,,인가율,,,,,,,,,
+,3,,63.4,,25.9%,,7.0%,,,,,,,,,`;
+
+/* ===== 공통 도구 ===== */
+const STATUS=["심각","과중","적정","여유"];
+const RULE={심각:"부하 130% 이상",과중:"부하 110%~130%",적정:"부하 80%~110%",여유:"부하 80% 미만"};
+const ACTION={심각:"신규 배정 즉시 중단 및 보정 업무 긴급 지원",과중:"업무량 실시간 모니터링 및 추가 배정 억제",적정:"표준 업무 사이클 및 현재 배정 비율 유지",여유:"신규 사건 우선 배정 및 보정 이관 수용"};
+function parseCSV(t){
+  const rows=[];let r=[],c="",q=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch=='"')q=true;
+    else if(ch==","){r.push(c);c=""}
+    else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);c="";rows.push(r);r=[]}
+    else c+=ch;
+  }
+  if(c!==""||r.length){r.push(c);rows.push(r)}
+  return rows.map(r=>r.map(s=>s.trim()));
+}
+const num=v=>{const n=parseFloat(String(v==null?"":v).replace(/[,%+\s]/g,""));return isNaN(n)?null:n};
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const int=n=>n==null?"-":Math.round(n).toLocaleString("ko-KR");
+const sum=a=>a.reduce((x,y)=>x+(y||0),0);
+const kpi=(k,v)=>`<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`;
+const sign=s=>/^\+|▲/.test(s)?"up":/^-\d|▼/.test(s)?"down":"flat";
+const bar=(label,val,max,right,color)=>`<div class="row" ${color?`style="--c:${color}"`:""}><span>${esc(label)}</span><div class="track"><div class="fill" style="width:${max?Math.min(100,val/max*100).toFixed(1):0}%"></div></div><span class="n">${right}</span></div>`;
+const heat=(v,max)=>v?`style="background:color-mix(in srgb,var(--acc) ${Math.round(v/max*55)}%,transparent)"`:"";
+const table=(head,rows,totalLast)=>`<div class="tbl"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+
+function colChart(labels,series){
+  const W=900,H=250,L=44,R=10,T=10,B=30;
+  const max=Math.max(1,...series.flatMap(s=>s.vals.map(v=>v||0))),top=Math.ceil(max/20)*20;
+  const n=labels.length,gw=(W-L-R)/n,bw=Math.min(24,gw/(series.length+.8));
+  let g="";
+  for(let k=0;k<=4;k++){const v=top*k/4,y=T+(H-T-B)*(1-v/top);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--sub)">${Math.round(v)}</text>`}
+  labels.forEach((lb,i)=>{
+    const cx=L+gw*i+gw/2;
+    series.forEach((s,j)=>{const v=s.vals[i]||0,h=(H-T-B)*v/top,x=cx-bw*series.length/2+bw*j;
+      g+=`<rect x="${x.toFixed(1)}" y="${(H-B-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${s.color}"><title>${esc(lb)} ${esc(s.name)} ${v}</title></rect>`});
+    g+=`<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="12" fill="var(--sub)">${esc(lb)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">${g}</svg><div class="legend">${series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`;
+}
+
+/* ===== 통합 데이터 탭 해석 ===== */
+function extractMain(text){
+  const A=parseCSV(text);
+  const F=(f,from=0)=>{for(let i=from;i<A.length;i++)if(f(A[i]))return i;return -1};
+  const until=(i,c)=>{const o=[];for(;i<A.length&&c(A[i]);i++)o.push(A[i]);return o};
+  const out={};
+  let h=F(r=>r[0]==="월"&&r[1]==="월 접수 건수");
+  if(h>=0){
+    const m=until(h+1,r=>/^\d+월$/.test(r[0])).map(r=>({l:r[0],f:num(r[1])||0,s:num(r[2])||0}));
+    const kvKeys=["월 신청 소요 기간","평균 개시 소요 기간","평균 보정 횟수","총 사건 처리 소요 기간"];
+    out.monthly={m,open:(A[h+1]||[])[5],kv:A.filter(r=>kvKeys.includes(r[0])).map(r=>[r[0],r[1]])};
+  }
+  h=F(r=>r[0]==="구분"&&r[1]==="한예지");
+  if(h>=0){const names=A[h].slice(1).filter(Boolean);
+    out.heat={names,rows:until(h+1,r=>/월$/.test(r[0])).map(r=>({l:r[0],v:names.map((_,j)=>num(r[j+1])||0)}))}}
+  h=F(r=>r[0]==="담당자"&&r[1]==="25년 전체");
+  if(h>=0){const rows=[];for(let i=h+1;i<A.length&&A[i][0];i++){rows.push(A[i].slice(0,14));if(A[i][0].startsWith("합계"))break}
+    out.growth={head:A[h].slice(0,14),rows}}
+  h=F(r=>r[0]==="건수 (수임월)");
+  if(h>=0){const hd=A[h+1],end=hd.indexOf("총계"),rows=[];
+    for(let i=h+2;i<A.length&&A[i][0];i++){rows.push(A[i].slice(0,end+1));if(A[i][0]==="총계")break}
+    out.counsel={head:hd.slice(0,end+1),rows}}
+  h=F(r=>r[0]==="상담자"&&r[1]==="개시");
+  if(h>=0){const hd=A[h],end=hd.indexOf("총계"),rows=[];
+    for(let i=h+1;i<A.length&&A[i][0];i++){rows.push(A[i].slice(0,end+1));if(A[i][0]==="총계")break}
+    out.status={head:hd.slice(0,end+1),rows}}
+  const pairList=(label)=>{
+    for(let i=0;i<A.length;i++){const j=A[i].findIndex((v,k)=>v==="상담자"&&A[i][k+1]===label);
+      if(j>=0){const o=[];for(let k=i+1;k<A.length&&A[k][j]&&A[k][j]!=="상담자";k++)o.push([A[k][j],num(A[k][j+1]),A[k][j+1]]);return o}}
+    return [];
+  };
+  out.openRate=pairList("개시율");out.avgIntake=pairList("월 평균 수임건");
+  h=F(r=>r[0]==="법원"&&r[1]==="평균 개시소요기간");
+  if(h>=0)out.courts=until(h+1,r=>r[0]).map(r=>({name:r[0],open:num(r[1]),fix:num(r[2]),months:r.slice(3,15).map(v=>num(v)||0),total:num(r[15])||0}));
+  h=F(r=>r[0]==="법원명"&&r[1]==="1월");
+  if(h>=0)out.nat=until(h+1,r=>r[0]).map(r=>({name:r[0],total:num(r[13])||0}));
+  return out;
+}
+
+function mainHTML(d){
+  let html="";
+  /* 1. 월별 실적 */
+  if(d.monthly){
+    const m=d.monthly.m.filter(x=>x.f||x.s),F=sum(m.map(x=>x.f)),S=sum(m.map(x=>x.s));
+    html+=`<h2>월별 실적 추이</h2><div class="kpis">${kpi("접수 건수(누적)",int(F))}${kpi("수임 건수(누적)",int(S))}${kpi("월평균 접수",int(F/m.length))}${d.monthly.open?kpi("전체 개시율",esc(d.monthly.open)):""}${d.monthly.kv.map(([k,v])=>kpi(k,esc(v)+(/기간/.test(k)?"일":/횟수/.test(k)?"회":""))).join("")}</div>
+    <div class="panel">${colChart(m.map(x=>x.l),[{name:"접수",vals:m.map(x=>x.f),color:"var(--acc)"},{name:"수임",vals:m.map(x=>x.s),color:"var(--acc2)"}])}</div>`;
+  }
+  return html;
+}
+function mainHTML2(d){
+  let html="";
+  /* 담당자별 월별 배정 추이 */
+  if(d.heat){html+=`<h2>담당자별 월별 사건 배정 추이</h2><div class="panel"><div class="chips" id="trend-chips"></div><div id="trend-chart"></div></div>`}
+  /* 2025-2026 비교 */
+  if(d.growth){
+    const body=d.growth.rows.map(r=>{const t=r[0].startsWith("합계");return `<tr class="${t?"tot":""}">${r.map((v,j)=>{const c=[4,5,9,11,12,13].includes(j)?sign(v):"";return `<td class="${c}">${esc(v)}</td>`}).join("")}</tr>`});
+    html+=`<h2>담당자별 2025-2026 성과 비교</h2><div class="panel">${table(d.growth.head,body)}<div class="legend">2025·2026년 연속 근무 담당자의 접수 실적 비교입니다. 26년 예상은 현재 월평균 기준 추정치입니다.</div></div>`;
+  }
+  /* 상담자 */
+  if(d.counsel){
+    const tot=d.counsel.rows.find(r=>r[0]==="총계"),rows=d.counsel.rows.filter(r=>r[0]!=="총계");
+    const max=Math.max(1,...rows.flatMap(r=>r.slice(1,-1).map(v=>num(v)||0)));
+    const body=[...rows.map(r=>`<tr><td>${esc(r[0])}</td>${r.slice(1).map((v,j)=>`<td ${j<r.length-2?heat(num(v)||0,max):""}>${esc(v||"")}</td>`).join("")}</tr>`),tot?`<tr class="tot">${tot.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`:""];
+    const byTotal=[...rows].sort((a,b)=>num(b[b.length-1])-num(a[a.length-1])),mt=Math.max(...byTotal.map(r=>num(r[r.length-1])||0),1);
+    html+=`<h2>상담자별 월별 수임 현황</h2><div class="panel">${table(d.counsel.head.map((h,i)=>i&&i<d.counsel.head.length-1?h.replace("2026-",""):h),body)}</div>
+    <div class="panel" style="margin-top:10px"><h3>상담자별 수임 합계</h3><div class="bars">${byTotal.map(r=>bar(r[0],num(r[r.length-1])||0,mt,int(num(r[r.length-1])))).join("")}</div></div>`;
+  }
+  /* 법원 */
+  if(d.courts){
+    const natMap=Object.fromEntries((d.nat||[]).map(n=>[n.name,n.total]));
+    const cs=d.courts.filter(c=>c.total>0).sort((a,b)=>b.total-a.total),mt=Math.max(1,...cs.map(c=>c.total));
+    const body=cs.map(c=>{const part=sum(c.months.slice(0,8)),nat=natMap[c.name],sh=nat?(part/nat*100).toFixed(2)+"%":"-";
+      return `<tr><td>${esc(c.name)}</td><td>${int(c.total)}</td><td>${nat?int(nat):"-"}</td><td>${sh}</td><td>${c.open==null?"-":c.open}</td><td>${c.fix==null?"-":c.fix}</td></tr>`});
+    html+=`<h2>법원별 접수 현황</h2><div class="two"><div class="panel"><h3>법원별 접수 건수</h3><div class="bars">${cs.map(c=>bar(c.name,c.total,mt,int(c.total),"var(--acc)")).join("")}</div></div>
+    <div class="panel"><h3>법원별 상세</h3>${table(["법원","접수(누적)","전국 접수(1~8월)","전국 대비 비중(1~8월)","개시 소요(일)","보정 소요(일)"],body)}<div class="legend">전국 대비 비중은 당사 1~8월 접수 ÷ 전국 접수(1~8월)입니다. 전국 통계가 8월까지라 같은 기간으로 맞췄습니다.</div></div></div>`;
+    html+=courtCmp(d);
+  }
+  return html;
+}
+
+/* ===== 담당자별 월별 배정 추이 (선 그래프) ===== */
+const PALETTE=["#2456a6","#d9531e","#2f9a7a","#8a4fd0","#c9a100","#d03f7a","#4a90c4","#7a8a00","#a0522d","#008b8b","#6b6bd1","#d2691e","#5f7f5f"];
+let TREND=null;
+function lineChart(labels,series){
+  const W=900,H=280,L=40,R=14,T=12,B=30;
+  const max=Math.max(5,...series.flatMap(s=>s.vals)),top=Math.ceil(max/5)*5,n=labels.length;
+  const sx=i=>L+(W-L-R)*(n>1?i/(n-1):.5),sy=v=>T+(H-T-B)*(1-v/top);
+  let g="";
+  for(let k=0;k<=5;k++){const v=top*k/5,y=sy(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--sub)">${Math.round(v)}</text>`}
+  labels.forEach((l,i)=>{g+=`<text x="${sx(i)}" y="${H-10}" text-anchor="middle" font-size="12" fill="var(--sub)">${esc(l)}</text>`});
+  series.forEach(s=>{
+    const d=s.vals.map((v,i)=>(i?"L":"M")+sx(i).toFixed(1)+" "+sy(v).toFixed(1)).join(" ");
+    g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.dash?2:2.5}" ${s.dash?'stroke-dasharray="6 5"':""} stroke-linejoin="round"/>`;
+    if(!s.dash)s.vals.forEach((v,i)=>{g+=`<circle cx="${sx(i)}" cy="${sy(v)}" r="3.5" fill="${s.color}"><title>${esc(s.name)} ${esc(labels[i])}: ${v}건</title></circle>`});
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="담당자별 월별 배정 추이">${g}</svg><div class="legend">${series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`;
+}
+function initTrend(h){
+  const rows=h.rows.filter(r=>sum(r.v)>0);
+  const totals=h.names.map((n,j)=>sum(rows.map(r=>r.v[j])));
+  const top3=[...h.names.keys()].sort((a,b)=>totals[b]-totals[a]).slice(0,3);
+  TREND={h,rows,sel:new Set(top3)};
+  const box=document.getElementById("trend-chips");if(!box)return;
+  box.innerHTML=h.names.map((n,j)=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(n)}</button>`).join("");
+  box.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;TREND.sel.has(j)?TREND.sel.delete(j):TREND.sel.add(j);b.setAttribute("aria-pressed",TREND.sel.has(j));drawTrend()});
+  drawTrend();
+}
+function drawTrend(){
+  const {h,rows,sel}=TREND,el=document.getElementById("trend-chart");if(!el)return;
+  const avg=rows.map(r=>+(sum(r.v)/h.names.length).toFixed(1));
+  const series=[...sel].sort((a,b)=>a-b).map(j=>({name:h.names[j],vals:rows.map(r=>r.v[j]),color:PALETTE[j%PALETTE.length]}));
+  series.push({name:"담당자 평균",vals:avg,color:"var(--sub)",dash:true});
+  el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다.</span></div>';
+}
+
+/* ===== 법원별 소요기간 비교 ===== */
+function courtCmp(d){
+  if(!d.courts)return "";
+  const cs=d.courts.filter(c=>c.total>0&&(c.open!=null||c.fix!=null)).sort((a,b)=>(b.open||0)-(a.open||0));
+  const mx=Math.max(1,...cs.flatMap(c=>[c.open||0,c.fix||0]));
+  const rows=cs.map(c=>`<div class="row"><span>${esc(c.name)}</span><div><div class="track"><div class="fill" style="width:${((c.open||0)/mx*100).toFixed(1)}%;background:var(--acc)"></div></div><div class="track" style="margin-top:3px"><div class="fill" style="width:${((c.fix||0)/mx*100).toFixed(1)}%;background:var(--acc2)"></div></div></div><span class="n">개시 ${c.open==null?"-":c.open} · 보정 ${c.fix==null?"-":c.fix} · ${int(c.total)}건</span></div>`).join("");
+  return `<div class="panel cmp" style="margin-top:10px"><h3>법원별 평균 소요기간 비교(일)</h3><div class="bars">${rows}</div><div class="legend"><span><i style="background:var(--acc)"></i>평균 개시 소요기간</span><span><i style="background:var(--acc2)"></i>평균 보정 소요기간</span><span>개시 소요기간 긴 순서입니다. 접수 건수가 적은 법원은 평균값이 한두 건에 좌우될 수 있습니다.</span></div></div>`;
+}
+
+/* ===== 업무 부하 탭 해석 ===== */
+function extractWork(text){
+  const all=parseCSV(text);
+  const h=all.findIndex(r=>r.some((v,j)=>v==="담당자"&&r[j+1]==="배정 건수"));
+  if(h<0)throw new Error("업무 부하 표를 찾지 못했습니다");
+  const start=all[h].findIndex(v=>v==="담당자"),head=all[h].slice(start),col=n=>head.indexOf(n);
+  const people=[];let total=null;
+  for(let i=h+1;i<all.length;i++){
+    const r=all[i].slice(start),name=r[0];if(!name)break;
+    const g=n=>r[col(n)];
+    const rec={name,assign:num(g("배정 건수")),filed:num(g("접수 건수")),fileRate:num(g("접수율")),fix:num(g("보정 건수")),open:num(g("개시율")),days:num(g("평균 소요기간")),backlog:num(g("미접수 적체(2개월)")),active:num(g("진행 사건 수")),urgent:num(g("긴급 보정(3일이하)")),load:num(g("종합 체감 부하(%)")),status:g("실질 업무 상태")||""};
+    if(name.startsWith("합계")){total=rec;break}
+    people.push(rec);
+  }
+  let note="";for(const r of all)for(const v of r)if(v.includes("종합 체감 부하:")&&v.includes("정의"))note=v;
+  const pairs=[],title=all.map(r=>r.find(v=>/^4\./.test(v))).find(Boolean);
+  for(const key of ["현재 진행 중인 사건 수","사건당 평균 보정 횟수"]){
+    const i=all.findIndex(r=>r.includes(key));if(i<0||!all[i+1])continue;
+    all[i].forEach((v,j)=>{const val=all[i+1][j];if(v&&val)pairs.push([v,val])});
+  }
+  return {people,total,note,personal:pairs.length?{title:(title||"개인 업무 성과").replace(/^4\.\s*/,""),pairs}:null};
+}
+function workHTML({people,total,note,personal},stale){
+  const by=[...people].sort((a,b)=>b.load-a.load),t=total||{};
+  const ICON={심각:"🚨",과중:"⚠️",적정:"✅",여유:"🔷"};
+  const nrows=Math.max(...STATUS.map(x=>by.filter(p=>p.status===x).length),1)+1;
+  const groups=STATUS.map(s=>{
+    const m=by.filter(p=>p.status===s),sm=k=>sum(m.map(p=>p[k])),avg=m.length?(sm("load")/m.length).toFixed(1):"-";
+    const rows=m.map(p=>`<tr><td>${esc(p.name)}</td><td class="ld">${p.load}%</td><td>${p.backlog}건 / ${p.active}건</td><td>${p.urgent}</td></tr>`);
+    while(rows.length<nrows)rows.push('<tr><td></td><td></td><td></td><td></td></tr>');
+    return `<div class="g" style="--h:var(--h-${s});--f:var(--f-${s})"><div class="gh">${ICON[s]} ${s} (${RULE[s]})</div><div class="gc">${m.length}명</div>
+    <table class="gt"><thead><tr><th>담당자</th><th>체감부하</th><th>적체 / 진행</th><th>긴급보정</th></tr></thead><tbody>${rows.join("")}</tbody></table>
+    <div class="gs"><span>미접수 적체 합계</span><b>${sm("backlog")}건</b></div><div class="gs"><span>긴급보정 / 진행 합계</span><b>${sm("urgent")}건 / ${sm("active")}건</b></div><div class="gs"><span>평균 체감 부하</span><b>${avg}%</b></div>
+    <div class="ga">${ACTION[s]}</div></div>`}).join("");
+  const trs=by.map(p=>`<tr><td>${esc(p.name)}</td><td>${int(p.assign)}</td><td>${int(p.filed)}</td><td>${p.fileRate}%</td><td>${int(p.fix)}</td><td>${p.open}%</td><td>${p.days}</td><td>${int(p.backlog)}</td><td>${int(p.active)}</td><td>${int(p.urgent)}</td><td>${p.load}%</td><td><span class="badge" style="--c:var(--s-${p.status||"적정"})">${esc(p.status)}</span></td></tr>`);
+  if(total)trs.push(`<tr class="tot"><td>합계/평균</td><td>${int(t.assign)}</td><td>${int(t.filed)}</td><td>${t.fileRate}%</td><td>${int(t.fix)}</td><td>${t.open}%</td><td>${t.days}</td><td>${int(t.backlog)}</td><td>${int(t.active)}</td><td>${int(t.urgent)}</td><td>${t.load}%</td><td></td></tr>`);
+  return `<h2>담당자별 업무 부하${stale?` <small class="flat" style="font-weight:400;font-size:13px">· 저장본(${SNAP_DATE} 기준)</small>`:""}</h2>
+  <div class="kpis">${kpi("총 배정 건수",int(t.assign))}${kpi("접수율",(t.fileRate??"-")+"%")}${kpi("개시율",(t.open??"-")+"%")}${kpi("평균 소요기간",(t.days??"-")+"일")}${kpi("미접수 적체",int(t.backlog)+"건")}${kpi("긴급 보정",int(t.urgent)+"건")}${kpi("평균 체감 부하",(t.load??"-")+"%")}</div>
+  <div class="gg">${groups}</div>${note?`<div class="gnote">${esc(note)}</div>`:""}
+  ${personal?`<h2>${esc(personal.title)}</h2><div class="kpis">${personal.pairs.map(([k,v])=>kpi(k,esc(v))).join("")}</div>`:""}
+  <h2>담당자별 상세</h2><div class="panel">${table(["담당자","배정","접수","접수율","보정","개시율","소요(일)","적체","진행","긴급","체감 부하","상태"],trs)}</div>`;
+}
+
+/* ===== 불러오기 ===== */
+async function get(url,snap){
+  try{const r=await fetch(url+"&t="+Date.now());if(!r.ok)throw new Error("HTTP "+r.status);return {t:await r.text(),live:true}}
+  catch(e){return {t:snap,live:false,err:e.message}}
+}
+async function load(){
+  const app=document.getElementById("app"),meta=document.getElementById("meta");
+  const [m,w]=await Promise.all([get(CONFIG.mainUrl,MAIN_SNAPSHOT),get(CONFIG.workUrl,WORK_SNAPSHOT)]);
+  let html="";
+  let D=null;try{D=extractMain(m.t);html+=mainHTML(D)}catch(e){html+='<div class="msg">월별 실적을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{html+=workHTML(extractWork(w.t),!w.live)}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{html+=mainHTML2(D||extractMain(m.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  app.innerHTML=html;
+  if(D&&D.heat)initTrend(D.heat);
+  const st=x=>x.live?"실시간":"저장본("+SNAP_DATE+" 기준)";
+  meta.textContent="통합 데이터: "+st(m)+" · 업무 부하: "+st(w)+" · "+new Date().toLocaleString("ko-KR")+(m.live&&w.live?"":" — 연결하지 못한 항목은 저장된 값이며 시트가 바뀌어도 갱신되지 않습니다.");
+}
+document.getElementById("reload").onclick=load;
+load();
+</script>
+</body>
+</html>
