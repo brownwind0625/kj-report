@@ -435,21 +435,38 @@ function workHTML({people,total,note},stale){
 }
 
 /* ===== 불러오기 ===== */
+// 저장본을 먼저 바로 보여 주고, 시트 연결이 끝나는 대로 최신 값으로 바꿉니다.
+const STATE={m:{t:MAIN_SNAPSHOT,live:false},w:{t:WORK_SNAPSHOT,live:false}};
+const PENDING={m:false,w:false};
 async function get(url,snap){
-  try{const r=await fetch(url+"&t="+Date.now());if(!r.ok)throw new Error("HTTP "+r.status);return {t:await r.text(),live:true}}
-  catch(e){return {t:snap,live:false,err:e.message}}
+  const ac=new AbortController(),timer=setTimeout(()=>ac.abort(),8000);
+  try{
+    const r=await fetch(url+"&t="+Date.now(),{signal:ac.signal});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return {t:await r.text(),live:true};
+  }catch(e){
+    return {t:snap,live:false,err:e.name==="AbortError"?"시간 초과":e.message};
+  }finally{clearTimeout(timer)}
 }
-async function load(){
+function paint(){
   const app=document.getElementById("app"),meta=document.getElementById("meta");
-  const [m,w]=await Promise.all([get(CONFIG.mainUrl,MAIN_SNAPSHOT),get(CONFIG.workUrl,WORK_SNAPSHOT)]);
-  let html="";
-  let D=null;try{D=extractMain(m.t);html+=mainHTML(D)}catch(e){html+='<div class="msg">월별 실적을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
-  try{html+=workHTML(extractWork(w.t),!w.live)}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
-  try{html+=mainHTML2(D||extractMain(m.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  let html="",D=null;
+  try{D=extractMain(STATE.m.t);html+=mainHTML(D)}catch(e){html+='<div class="msg">월별 실적을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{html+=workHTML(extractWork(STATE.w.t),!STATE.w.live)}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{html+=mainHTML2(D||extractMain(STATE.m.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
   if(D&&D.heat)initTrend(D.heat);
-  const st=x=>x.live?"실시간":"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+x.err+")";
-  meta.textContent="통합 데이터: "+st(m)+" · 업무 부하: "+st(w)+" · "+new Date().toLocaleString("ko-KR")+(m.live&&w.live?"":" — 연결하지 못한 항목은 저장된 값이며 시트가 바뀌어도 갱신되지 않습니다.");
+  const lab=k=>{const x=STATE[k];
+    if(PENDING[k])return x.live?"갱신 중…":"연결 중… (저장본을 임시로 표시)";
+    return x.live?"실시간":"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+x.err+")"};
+  const done=!PENDING.m&&!PENDING.w,allLive=STATE.m.live&&STATE.w.live;
+  meta.textContent="통합 데이터: "+lab("m")+" · 업무 부하: "+lab("w")+" · "+new Date().toLocaleString("ko-KR")+(done&&!allLive?" — 연결하지 못한 항목은 저장된 값이며 시트가 바뀌어도 갱신되지 않습니다.":"");
+}
+function load(){
+  PENDING.m=PENDING.w=true;
+  paint();
+  [["m",CONFIG.mainUrl,MAIN_SNAPSHOT],["w",CONFIG.workUrl,WORK_SNAPSHOT]].forEach(([k,u,snap])=>
+    get(u,snap).then(r=>{STATE[k]=r;PENDING[k]=false;paint()}));
 }
 document.getElementById("reload").onclick=load;
 load();
