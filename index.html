@@ -70,6 +70,23 @@ svg{width:100%;height:auto;display:block}
 .gs span{font-weight:500;border-right:1px solid var(--line)}
 .ga{margin-top:auto;border-top:1px solid var(--line);color:var(--f);font-weight:700;font-size:12px;text-align:center;padding:10px 6px;background:var(--t)}
 .gnote{margin-top:10px;background:color-mix(in srgb,var(--ink) 7%,var(--card));border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:12.5px;line-height:1.75;white-space:pre-line;color:var(--f-심각)}
+.sb{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:10px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.sc.top{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.sh{display:flex;align-items:center;gap:8px}
+.rk{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:var(--bg);color:var(--sub);font-size:12px;font-weight:700}
+.sc.top .rk{background:var(--acc);color:var(--card)}
+.nm{font-weight:700;font-size:16px}
+.tag{margin-left:auto;font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:99px;padding:0 7px}
+.big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:4px}
+.big small{font-size:14px;font-weight:500;color:var(--sub);margin-left:3px}
+.trk{height:6px;background:var(--bg);border-radius:3px;margin-top:4px}
+.fl{height:100%;background:var(--acc);border-radius:3px}
+.share{font-size:12px;color:var(--sub);margin-bottom:6px}
+.st{display:flex;justify-content:space-between;gap:8px;font-size:13px;border-top:1px solid var(--line);padding:5px 0}
+.st span{color:var(--sub)}
+.st b.slow{color:var(--down)}.st b.fast{color:var(--up)}
+.st small{font-weight:500}
 </style>
 </head>
 <body>
@@ -83,12 +100,10 @@ svg{width:100%;height:auto;display:block}
 <script>
 /* ===== 설정 ===== */
 const CONFIG = {
-  // 통합 데이터 탭 (월별 실적, 담당자, 상담자, 법원)
-  mainUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=872690463&single=true&output=csv",
-  // 담당자별 업무 부하 표가 있는 탭 (게시되지 않으면 아래 저장본을 표시)
-  workUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=1570934634&single=true&output=csv"
+  // 통합 데이터 탭 (월별 실적, 담당자, 상담자, 법원, 업무 부하가 모두 이 탭에 있음)
+  url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=872690463&single=true&output=csv"
 };
-const SNAP_DATE = "2026-10-15";
+const SNAP_DATE = "2026-10-16";
 
 /* ===== 저장본(연결 실패 시 표시) ===== */
 const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균,전체 개시율
@@ -197,28 +212,31 @@ const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균
 제주,183,163,225,218,158,182,158,158,0,0,0,0,"1,445"
 `;
 
-const WORK_SNAPSHOT = `,담당자,배정 건수,접수 건수,접수율,보정 건수,사건당 보정,개시율,평균 소요기간,배정 점유율,배정 집중도(%),부하 상태,미접수 적체(2개월),진행 사건 수,긴급 보정(3일이하),종합 체감 부하(%),실질 업무 상태
-,한예지,126,110,87.3%,65,0.6,42.4%,133.3,11.0%,106.4%,적정,2,33,1,77.7%,여유
-,주혜인,121,116,95.9%,29,0.3,47.7%,157.1,10.5%,102.2%,적정,0,27,1,49.2%,여유
-,이준서,124,90,72.6%,47,0.5,47.1%,134.7,10.8%,104.7%,적정,5,28,2,124.5%,과중
-,류예지,116,96,82.8%,75,0.8,41.1%,151.4,10.1%,98.0%,적정,4,24,4,148.0%,심각
-,김정석,94,82,87.2%,35,0.4,45.8%,79.6,8.2%,79.4%,여유,1,12,0,24.2%,여유
-,곽정윤,105,86,81.9%,47,0.5,43.7%,169.3,9.2%,88.7%,적정,5,24,1,100.6%,적정
-,최제현,107,69,64.5%,53,0.8,47.4%,139.5,9.3%,90.4%,적정,6,19,2,125.5%,과중
-,노두환,102,75,73.5%,50,0.7,42.3%,141.6,8.9%,86.1%,적정,11,32,2,194.5%,심각
-,박성희,91,70,76.9%,57,0.8,47.4%,180.8,7.9%,76.9%,여유,7,31,2,149.6%,심각
-,서소라,83,60,72.3%,32,0.5,36.8%,170.7,7.2%,70.1%,여유,5,23,2,118.9%,과중
-,이지은,36,25,69.4%,13,0.5,16.0%,36.5,3.1%,30.4%,여유,3,12,0,46.0%,여유
-,기타,42,3,7.1%,3,1.0,0.0%,0.0,3.7%,35.5%,여유,0,1,0,1.1%,여유
-,합계 / 평균,"1,147",882,76.9%,506,0.6,38.1%,124.5,100.0%,80.7%,-,49,266,17,96.7%,-
-,,,,,,,,,,,,,,,,
-,"*  종합 체감 부하: =0.35*(적체/직원 평균 3.2건) + 0.3*(진행/직원 평균 26.4건) + 0.35*(긴급보정/직원 평균 3.0건)
+const WORK_SNAPSHOT = `담당자별 업무 현황 및 실질 업무 부하 분석 (2026년),,,,,,,,,,,,,,,
+담당자,배정 건수,접수 건수,접수율,보정 건수,사건당 보정,개시율,평균 소요기간,배정 점유율,배정 집중도(%),부하 상태,미접수 적체(2개월),진행 사건 수,긴급 보정(3일이하),종합 체감 부하(%),실질 업무 상태
+한예지,126,111,88.1%,65,0.6,42.0%,133.3,11.0%,106.4%,적정,1,33,0,45.3%,여유
+주혜인,121,116,95.9%,37,0.3,47.7%,157.1,10.5%,102.2%,적정,0,26,1,52.1%,여유
+이준서,124,90,72.6%,48,0.5,47.1%,134.7,10.8%,104.7%,적정,6,30,4,196.9%,심각
+류예지,116,96,82.8%,81,0.8,41.1%,151.4,10.1%,98.0%,적정,4,26,2,120.8%,과중
+김정석,94,83,88.3%,35,0.4,45.2%,79.6,8.2%,79.4%,여유,0,12,0,12.5%,여유
+곽정윤,105,86,81.9%,58,0.7,43.7%,169.3,9.2%,88.7%,적정,5,29,0,84.9%,적정
+최제현,107,69,64.5%,64,0.9,47.4%,139.5,9.3%,90.4%,적정,6,17,1,108.3%,적정
+노두환,102,76,74.5%,52,0.7,41.8%,141.6,8.9%,86.1%,적정,10,31,0,141.7%,심각
+박성희,91,70,76.9%,58,0.8,47.4%,180.8,7.9%,76.9%,여유,7,32,1,134.9%,심각
+서소라,83,60,72.3%,37,0.6,36.8%,170.7,7.2%,70.1%,여유,5,23,5,203.6%,심각
+이지은,36,26,72.2%,15,0.6,15.4%,36.5,3.1%,30.4%,여유,2,10,0,32.3%,여유
+기타,42,3,7.1%,4,1.3,0.0%,0.0,3.7%,35.5%,여유,0,1,0,1.0%,여유
+합계 / 평균,"1,147",886,77.2%,554,0.6,38.0%,124.5,100.0%,80.7%,-,46,270,14,94.5%,-
+
+"*  종합 체감 부하: =0.35*(적체/직원 평균 3.2건) + 0.3*(진행/직원 평균 26.4건) + 0.35*(긴급보정/직원 평균 3.0건)
 * 100%란, 직원 평균 수치입니다. 즉, 직원의 평균 업무 상태와 동일하게 일하고 있다면 종합 체감 부하는 정확히 100%가 됩니다.
 
 * 정의
 1) 적체: 사건이 담당자에게 배정되었으나 2개월 이상 법원에 접수되지 못하고 대기/지연되고 있는 미접수 사건 건수입니다.
 2) 진행: 현재 각 담당자가 실제로 전담하여 수행 및 처리 중인 사건 수입니다.
-3) 긴급보정: 보정 유형 '명변', '이의', '기타' 및 기한 초과(제출 마감일 경과) 건을 제외하고, 법원 송달문서 제출 기한이 오늘부터 3일 이하로 임박한 송달 문서의 건수입니다.",,,,,,,,,,,,,,,`;
+3) 긴급보정: 보정 유형 '명변', '이의', '기타' 및 기한 초과(제출 마감일 경과) 건을 제외하고, 법원 송달문서 제출 기한이 오늘부터 3일 이하로 임박한 송달 문서의 건수입니다.",,,,,,,,,,,,,,,
+`;
+const ALL_SNAPSHOT = MAIN_SNAPSHOT + "\n" + WORK_SNAPSHOT;
 
 /* ===== 공통 도구 ===== */
 const HIDE_NAMES=["기타","전명일"];   // 화면에서 제외할 담당자
@@ -304,13 +322,18 @@ function extractMain(text){
   return out;
 }
 
-function mainHTML(d){
+function acChart(people){
+  const ac=[...people].sort((a,b)=>(b.assign||0)-(a.assign||0));
+  return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다.</span></div></div>`;
+}
+function mainHTML(d,work){
   let html="";
   /* 1. 월별 실적 */
   if(d.monthly){
     const m=d.monthly.m.filter(x=>x.f||x.s),F=sum(m.map(x=>x.f)),S=sum(m.map(x=>x.s));
     html+=`<h2>월별 실적 추이</h2><div class="kpis">${kpi("접수 건수(누적)",int(F))}${kpi("수임 건수(누적)",int(S))}${kpi("월평균 접수",int(F/m.length))}${d.monthly.open?kpi("전체 개시율",esc(d.monthly.open)):""}${d.monthly.kv.map(([k,v])=>kpi(k,esc(v)+(/기간/.test(k)?"일":/횟수/.test(k)?"회":""))).join("")}</div>
     <div class="panel">${colChart(m.map(x=>x.l),[{name:"접수",vals:m.map(x=>x.f),color:"var(--acc)"},{name:"수임",vals:m.map(x=>x.s),color:"var(--acc2)"}])}</div>`;
+    if(work&&work.people.length)html+=acChart(work.people);
   }
   return html;
 }
@@ -318,11 +341,6 @@ function mainHTML2(d){
   let html="";
   /* 담당자별 월별 배정 추이 */
   if(d.heat){html+=`<h2>담당자별 월별 사건 배정 추이</h2><div class="panel"><div class="chips" id="trend-chips"></div><div id="trend-chart"></div></div>`}
-  /* 2025-2026 비교 */
-  if(d.growth){
-    const body=d.growth.rows.map(r=>{const t=r[0].startsWith("합계");return `<tr class="${t?"tot":""}">${r.map((v,j)=>{const c=[4,5,9,11,12,13].includes(j)?sign(v):"";return `<td class="${c}">${esc(v)}</td>`}).join("")}</tr>`});
-    html+=`<h2>담당자별 2025-2026 성과 비교</h2><div class="panel">${table(d.growth.head,body)}<div class="legend">2025·2026년 연속 근무 담당자의 접수 실적 비교입니다. 26년 예상은 현재 월평균 기준 추정치입니다.</div></div>`;
-  }
   /* 상담자 */
   if(d.counsel){
     const tot=d.counsel.rows.find(r=>r[0]==="총계"),rows=d.counsel.rows.filter(r=>r[0]!=="총계");
@@ -332,16 +350,7 @@ function mainHTML2(d){
     html+=`<h2>상담자별 월별 수임 현황</h2><div class="panel">${table(d.counsel.head.map((h,i)=>i&&i<d.counsel.head.length-1?h.replace("2026-",""):h),body)}</div>
     <div class="panel" style="margin-top:10px"><h3>상담자별 수임 합계</h3><div class="bars">${byTotal.map(r=>bar(r[0],num(r[r.length-1])||0,mt,int(num(r[r.length-1])))).join("")}</div></div>`;
   }
-  /* 법원 */
-  if(d.courts){
-    const natMap=Object.fromEntries((d.nat||[]).map(n=>[n.name,n.total]));
-    const cs=d.courts.filter(c=>c.total>0).sort((a,b)=>b.total-a.total),mt=Math.max(1,...cs.map(c=>c.total));
-    const body=cs.map(c=>{const part=sum(c.months.slice(0,8)),nat=natMap[c.name],sh=nat?(part/nat*100).toFixed(2)+"%":"-";
-      return `<tr><td>${esc(c.name)}</td><td>${int(c.total)}</td><td>${nat?int(nat):"-"}</td><td>${sh}</td><td>${c.open==null?"-":c.open}</td><td>${c.fix==null?"-":c.fix}</td></tr>`});
-    html+=`<h2>법원별 접수 현황</h2><div class="two"><div class="panel"><h3>법원별 접수 건수</h3><div class="bars">${cs.map(c=>bar(c.name,c.total,mt,int(c.total),"var(--acc)")).join("")}</div></div>
-    <div class="panel"><h3>법원별 상세</h3>${table(["법원","접수(누적)","전국 접수(1~8월)","전국 대비 비중(1~8월)","개시 소요(일)","보정 소요(일)"],body)}<div class="legend">전국 대비 비중은 당사 1~8월 접수 ÷ 전국 접수(1~8월)입니다. 전국 통계가 8월까지라 같은 기간으로 맞췄습니다.</div></div></div>`;
-    html+=courtCmp(d);
-  }
+  html+=courtBoard(d);
   return html;
 }
 
@@ -382,13 +391,34 @@ function drawTrend(){
   el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다.</span></div>';
 }
 
-/* ===== 법원별 소요기간 비교 ===== */
-function courtCmp(d){
+/* ===== 법원별 접수·소요기간 스코어보드 ===== */
+function courtBoard(d){
   if(!d.courts)return "";
-  const cs=d.courts.filter(c=>c.total>0&&(c.open!=null||c.fix!=null)).sort((a,b)=>(b.open||0)-(a.open||0));
-  const mx=Math.max(1,...cs.flatMap(c=>[c.open||0,c.fix||0]));
-  const rows=cs.map(c=>`<div class="row"><span>${esc(c.name)}</span><div><div class="track"><div class="fill" style="width:${((c.open||0)/mx*100).toFixed(1)}%;background:var(--acc)"></div></div><div class="track" style="margin-top:3px"><div class="fill" style="width:${((c.fix||0)/mx*100).toFixed(1)}%;background:var(--acc2)"></div></div></div><span class="n">개시 ${c.open==null?"-":c.open} · 보정 ${c.fix==null?"-":c.fix} · ${int(c.total)}건</span></div>`).join("");
-  return `<div class="panel cmp" style="margin-top:10px"><h3>법원별 평균 소요기간 비교(일)</h3><div class="bars">${rows}</div><div class="legend"><span><i style="background:var(--acc)"></i>평균 개시 소요기간</span><span><i style="background:var(--acc2)"></i>평균 보정 소요기간</span><span>개시 소요기간 긴 순서입니다. 접수 건수가 적은 법원은 평균값이 한두 건에 좌우될 수 있습니다.</span></div></div>`;
+  const natMap=Object.fromEntries((d.nat||[]).map(n=>[n.name,n.total]));
+  const cs=d.courts.filter(c=>c.total>0).sort((a,b)=>b.total-a.total);
+  if(!cs.length)return "";
+  const all=sum(cs.map(c=>c.total));
+  const wavg=k=>{const v=cs.filter(c=>c[k]!=null&&c[k]>0);const w=sum(v.map(c=>c.total));return w?sum(v.map(c=>c[k]*c.total))/w:null};
+  const aO=wavg("open"),aF=wavg("fix");
+  const stat=(label,v,avg)=>{
+    if(v==null||!v)return `<div class="st"><span>${label}</span><b class="flat">-</b></div>`;
+    const diff=avg==null?null:Math.round(v-avg),cls=diff==null?"flat":diff>0?"slow":"fast";
+    return `<div class="st"><span>${label}</span><b class="${cls}">${v.toFixed(1)}일${diff==null||diff===0?"":` <small>${diff>0?"▲":"▼"}${Math.abs(diff)}</small>`}</b></div>`;
+  };
+  const mx=cs[0].total;
+  const cards=cs.map((c,i)=>{
+    const part=sum(c.months.slice(0,8)),nat=natMap[c.name],sh=nat?(part/nat*100).toFixed(2)+"%":"-";
+    return `<div class="sc${i<3?" top":""}"><div class="sh"><span class="rk">${i+1}</span><span class="nm">${esc(c.name)}</span>${c.total<10?'<span class="tag">접수 적음</span>':""}</div>
+    <div class="big">${int(c.total)}<small>건</small></div>
+    <div class="trk" title="당사 전체 접수의 ${(c.total/all*100).toFixed(1)}%"><div class="fl" style="width:${(c.total/mx*100).toFixed(1)}%"></div></div>
+    <div class="share">당사 접수의 ${(c.total/all*100).toFixed(1)}%</div>
+    ${stat("평균 개시 소요",c.open,aO)}${stat("평균 보정 소요",c.fix,aF)}
+    <div class="st"><span>전국 대비(1~8월)</span><b>${sh}</b></div></div>`;
+  }).join("");
+  return `<h2>법원별 접수 현황과 소요기간</h2>
+  <div class="kpis">${kpi("총 접수 건수",int(all))}${kpi("접수 법원",cs.length+"곳")}${kpi("평균 개시 소요",aO==null?"-":aO.toFixed(1)+"일")}${kpi("평균 보정 소요",aF==null?"-":aF.toFixed(1)+"일")}</div>
+  <div class="sb">${cards}</div>
+  <div class="legend" style="margin-top:8px"><span class="up">▼ 평균보다 짧음</span><span class="down">▲ 평균보다 긺</span><span>평균은 법원별 접수 건수로 가중한 값입니다. 접수가 10건 미만인 법원은 평균이 한두 건에 좌우될 수 있습니다. 전국 대비는 당사 1~8월 접수 ÷ 전국 접수(1~8월)입니다.</span></div>`;
 }
 
 /* ===== 업무 부하 탭 해석 ===== */
@@ -436,37 +466,39 @@ function workHTML({people,total,note},stale){
 
 /* ===== 불러오기 ===== */
 // 저장본을 먼저 바로 보여 주고, 시트 연결이 끝나는 대로 최신 값으로 바꿉니다.
-const STATE={m:{t:MAIN_SNAPSHOT,live:false},w:{t:WORK_SNAPSHOT,live:false}};
-const PENDING={m:false,w:false};
-async function get(url,snap){
-  const ac=new AbortController(),timer=setTimeout(()=>ac.abort(),8000);
+let STATE={t:ALL_SNAPSHOT,live:false};
+let PENDING=false;
+async function fetchOnce(url,ms){
+  const ac=new AbortController(),timer=setTimeout(()=>ac.abort(),ms);
   try{
-    const r=await fetch(url+"&t="+Date.now(),{signal:ac.signal});
-    if(!r.ok)throw new Error("HTTP "+r.status);
-    return {t:await r.text(),live:true};
-  }catch(e){
-    return {t:snap,live:false,err:e.name==="AbortError"?"시간 초과":e.message};
+    const r=await fetch(url,{signal:ac.signal,cache:"no-store"});
+    if(!r.ok){const e=new Error("HTTP "+r.status);e.fatal=true;throw e}
+    return await r.text();
   }finally{clearTimeout(timer)}
+}
+async function get(url,snap){
+  let last;
+  for(let i=0;i<2;i++){             // 시간 초과·네트워크 오류는 한 번 더 시도
+    try{return {t:await fetchOnce(url,20000),live:true}}
+    catch(e){last=e;if(e.fatal)break}
+  }
+  return {t:snap,live:false,err:last&&last.name==="AbortError"?"시간 초과":(last&&last.message)||"알 수 없음"};
 }
 function paint(){
   const app=document.getElementById("app"),meta=document.getElementById("meta");
-  let html="",D=null;
-  try{D=extractMain(STATE.m.t);html+=mainHTML(D)}catch(e){html+='<div class="msg">월별 실적을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
-  try{html+=workHTML(extractWork(STATE.w.t),!STATE.w.live)}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
-  try{html+=mainHTML2(D||extractMain(STATE.m.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  let html="",D=null,W=null,werr=null;
+  try{W=extractWork(STATE.t)}catch(e){werr=e}
+  try{D=extractMain(STATE.t);html+=mainHTML(D,W)}catch(e){html+='<div class="msg">월별 실적을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{if(werr)throw werr;html+=workHTML(W,!STATE.live)}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{html+=mainHTML2(D||extractMain(STATE.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
   if(D&&D.heat)initTrend(D.heat);
-  const lab=k=>{const x=STATE[k];
-    if(PENDING[k])return x.live?"갱신 중…":"연결 중… (저장본을 임시로 표시)";
-    return x.live?"실시간":"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+x.err+")"};
-  const done=!PENDING.m&&!PENDING.w,allLive=STATE.m.live&&STATE.w.live;
-  meta.textContent="통합 데이터: "+lab("m")+" · 업무 부하: "+lab("w")+" · "+new Date().toLocaleString("ko-KR")+(done&&!allLive?" — 연결하지 못한 항목은 저장된 값이며 시트가 바뀌어도 갱신되지 않습니다.":"");
+  const lab=PENDING?(STATE.live?"갱신 중…":"연결 중… (저장본을 임시로 표시)"):STATE.live?"실시간":"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+STATE.err+")";
+  meta.textContent="데이터: "+lab+" · "+new Date().toLocaleString("ko-KR")+(!PENDING&&!STATE.live?" — 연결하지 못해 저장된 값을 표시 중이며, 시트가 바뀌어도 갱신되지 않습니다.":"");
 }
 function load(){
-  PENDING.m=PENDING.w=true;
-  paint();
-  [["m",CONFIG.mainUrl,MAIN_SNAPSHOT],["w",CONFIG.workUrl,WORK_SNAPSHOT]].forEach(([k,u,snap])=>
-    get(u,snap).then(r=>{STATE[k]=r;PENDING[k]=false;paint()}));
+  PENDING=true;paint();
+  get(CONFIG.url,ALL_SNAPSHOT).then(r=>{STATE=r;PENDING=false;paint()});
 }
 document.getElementById("reload").onclick=load;
 load();
