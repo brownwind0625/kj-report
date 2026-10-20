@@ -87,6 +87,10 @@ svg{width:100%;height:auto;display:block}
 .st span{color:var(--sub)}
 .st b.slow{color:var(--down)}.st b.fast{color:var(--up)}
 .st small{font-weight:500}
+.cmpk{font-size:12px;color:var(--sub);margin-top:2px}
+.durrow{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;font-size:14px;padding:5px 0}
+.durrow .n{text-align:right;font-weight:700}
+@media(max-width:560px){.durrow{grid-template-columns:110px 1fr 56px}}
 </style>
 </head>
 <body>
@@ -326,13 +330,80 @@ function acChart(people){
   const ac=[...people].sort((a,b)=>(b.assign||0)-(a.assign||0));
   return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다.</span></div></div>`;
 }
+/* ===== 월별 실적 추이 ===== */
+function monthInfo(label){            // 이번 달이면 진행 중인 달로 처리
+  const mm=/^(\d+)월/.exec(label);if(!mm)return null;
+  const t=new Date(),mo=+mm[1];
+  if(mo!==t.getMonth()+1)return null;
+  return {elapsed:t.getDate(),dim:new Date(t.getFullYear(),mo,0).getDate()};
+}
+const pctChg=(a,b)=>b?(a-b)/b*100:null;
+const chgTxt=v=>v==null?"":(v>=0?"▲":"▼")+Math.abs(v).toFixed(0)+"%";
+function monthChart(m,inf,avgF,avgS){
+  const W=900,H=300,L=44,R=86,T=26,B=66,n=m.length,last=m[n-1];
+  const showProj=inf&&inf.elapsed>=7;
+  const proj=showProj?{f:Math.round(last.f/inf.elapsed*inf.dim),s:Math.round(last.s/inf.elapsed*inf.dim)}:null;
+  const max=Math.max(1,...m.flatMap(x=>[x.f,x.s]),...(proj?[proj.f,proj.s]:[]),avgF||0,avgS||0),top=Math.ceil(max/20)*20;
+  const gw=(W-L-R)/n,bw=Math.min(24,gw/2.8),sy=v=>T+(H-T-B)*(1-v/top);
+  const ser=[["f","접수","var(--acc)"],["s","수임","var(--acc2)"]];
+  let g="";
+  for(let k=0;k<=4;k++){const v=top*k/4,y=sy(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--sub)">${Math.round(v)}</text>`}
+  m.forEach((x,i)=>{
+    const cx=L+gw*i+gw/2,cur=inf&&i===n-1;
+    ser.forEach(([k,name,color],j)=>{
+      const v=x[k],h=(H-T-B)*v/top,bx=cx-bw+bw*j;
+      g+=`<rect x="${bx.toFixed(1)}" y="${(H-B-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}" ${cur?'fill-opacity=".4" stroke="'+color+'" stroke-dasharray="3 2"':""}><title>${esc(x.l)} ${name} ${v}건${cur?" (진행 중)":""}</title></rect>`;
+      if(v)g+=`<text x="${(bx+bw/2).toFixed(1)}" y="${(H-B-h-5).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="500" fill="var(--ink)">${v}</text>`;
+      if(cur&&proj){const pv=proj[k],py=sy(pv);
+        g+=`<rect x="${bx.toFixed(1)}" y="${py.toFixed(1)}" width="${bw.toFixed(1)}" height="${(H-B-py).toFixed(1)}" rx="2" fill="none" stroke="${color}" stroke-dasharray="4 3"><title>${esc(x.l)} ${name} 예상 ${pv}건 (경과 ${inf.elapsed}/${inf.dim}일 기준)</title></rect>`;
+      }
+    });
+    if(cur&&proj){g+=`<text x="${cx}" y="${(sy(Math.max(proj.f,proj.s))-6).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="var(--sub)">예상 ${proj.f} · ${proj.s}</text>`}
+    g+=`<text x="${cx}" y="${H-B+16}" text-anchor="middle" font-size="12" fill="var(--sub)">${esc(x.l)}${cur?"*":""}</text>`;
+    if(i>0)ser.forEach(([k,,color],j)=>{const c=pctChg(x[k],m[i-1][k]);
+      g+=`<text x="${cx}" y="${H-B+32+j*14}" text-anchor="middle" font-size="11" fill="${color}" opacity="${cur?.6:1}">${chgTxt(c)}</text>`});
+  });
+  // 완료된 달 평균 기준선 (두 선이 가까우면 글자 위치를 벌림)
+  const lines=[[avgF,"접수","var(--acc)"],[avgS,"수임","var(--acc2)"]].filter(l=>l[0]!=null);
+  let prevY=-99;
+  lines.sort((a,b)=>sy(a[0])-sy(b[0])).forEach(([v,name,color])=>{
+    const y=sy(v);let ty=y+4;if(ty-prevY<14)ty=prevY+14;prevY=ty;
+    g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="${color}" stroke-width="1.3" stroke-dasharray="6 4" opacity=".8"/><text x="${W-R+6}" y="${ty}" font-size="11" fill="${color}">${name} 평균 ${Math.round(v)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="월별 접수·수임 추이">${g}</svg>`;
+}
+function monthlyHTML(M){
+  const m=M.m.filter(x=>x.f||x.s);if(!m.length)return "";
+  const inf=monthInfo(m[m.length-1].l),done=inf?m.slice(0,-1):m;
+  const F=sum(m.map(x=>x.f)),S=sum(m.map(x=>x.s));
+  const avgF=done.length?sum(done.map(x=>x.f))/done.length:null,avgS=done.length?sum(done.map(x=>x.s))/done.length:null;
+  const cur=m[m.length-1],prev=m[m.length-2],dl=done[done.length-1];   // 현재 달 기준
+  const card=(k,v,sub)=>`<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${v}</div>${sub?`<div class="cmpk">${sub}</div>`:""}</div>`;
+  const chg=(a,b)=>{const c=pctChg(a,b);return c==null?"":`<span class="${c>=0?"up":"down"}">${chgTxt(c)}</span> ${esc(prev.l)} 대비`};
+  const pr=inf&&inf.elapsed>=7?{f:Math.round(cur.f/inf.elapsed*inf.dim),s:Math.round(cur.s/inf.elapsed*inf.dim)}:null;
+  const sub=k=>{const c=prev?chg(cur[k],prev[k]):"";
+    if(!pr||!prev)return c;
+    const pc=pctChg(pr[k],prev[k]);
+    return c+`<br>월말 예상 ${pr[k]}건 (<span class="${pc>=0?"up":"down"}">${chgTxt(pc)}</span>)`};
+  const tag=inf?" (진행 중)":"";
+  let cards=card(esc(cur.l)+" 접수"+tag,int(cur.f)+"건",sub("f"))+card(esc(cur.l)+" 수임"+tag,int(cur.s)+"건",sub("s"))
+    +card("접수 건수(누적)",int(F),m.length+"개월")+card("수임 건수(누적)",int(S),"");
+  if(avgF!=null)cards+=card("월평균 접수 · 수임",int(avgF)+" · "+int(avgS),esc(done[0].l)+"~"+esc(dl.l)+" 완료된 달 평균");
+  if(M.open)cards+=card("전체 개시율",esc(M.open),"");
+  // 소요기간: 시트에 정의된 별도 평균이므로 같은 눈금으로 나란히 비교만 합니다.
+  const dur=M.kv.filter(([k])=>/기간/.test(k)).map(([k,v])=>[k,parseFloat(String(v).replace(/,/g,""))]).filter(x=>!isNaN(x[1]));
+  const fixN=M.kv.find(([k])=>/보정/.test(k));
+  const dmax=Math.max(1,...dur.map(x=>x[1]));
+  const durHTML=dur.length?`<div class="panel" style="margin-top:10px"><h3>소요기간 한눈에 보기</h3>${dur.map(([k,v])=>`<div class="durrow"><span>${esc(k)}</span><div class="track"><div class="fill" style="width:${(v/dmax*100).toFixed(1)}%;background:var(--acc)"></div></div><span class="n">${int(v)}일</span></div>`).join("")}<div class="legend"><span>${fixN?"평균 보정 횟수 "+esc(fixN[1])+"회 · ":""}각 항목은 시트에 정의된 별도 평균 기간이며, 서로 더한 값이 아닙니다.</span></div></div>`:"";
+  return `<h2>월별 실적 추이</h2><div class="kpis">${cards}</div>
+  <div class="panel">${monthChart(m,inf,avgF,avgS)}<div class="legend"><span><i style="background:var(--acc)"></i>접수</span><span><i style="background:var(--acc2)"></i>수임</span><span>점선: 완료된 달 평균</span><span>월 아래 숫자: 전월 대비 증감 (위 파랑=접수, 아래 초록=수임)${inf?" · 진행 중인 달은 달이 끝나기 전 값이라 흐리게 표시":""}</span>${inf?`<span>* ${esc(m[m.length-1].l)}은 진행 중이라 연하게 표시하고, 점선 막대는 경과일(${inf.elapsed}/${inf.dim}일) 기준 환산 예상치입니다.</span>`:""}</div></div>${durHTML}`;
+}
+
 function mainHTML(d,work){
   let html="";
   /* 1. 월별 실적 */
   if(d.monthly){
-    const m=d.monthly.m.filter(x=>x.f||x.s),F=sum(m.map(x=>x.f)),S=sum(m.map(x=>x.s));
-    html+=`<h2>월별 실적 추이</h2><div class="kpis">${kpi("접수 건수(누적)",int(F))}${kpi("수임 건수(누적)",int(S))}${kpi("월평균 접수",int(F/m.length))}${d.monthly.open?kpi("전체 개시율",esc(d.monthly.open)):""}${d.monthly.kv.map(([k,v])=>kpi(k,esc(v)+(/기간/.test(k)?"일":/횟수/.test(k)?"회":""))).join("")}</div>
-    <div class="panel">${colChart(m.map(x=>x.l),[{name:"접수",vals:m.map(x=>x.f),color:"var(--acc)"},{name:"수임",vals:m.map(x=>x.s),color:"var(--acc2)"}])}</div>`;
+    html+=monthlyHTML(d.monthly);
     if(work&&work.people.length)html+=acChart(work.people);
   }
   return html;
@@ -458,43 +529,62 @@ function workHTML({people,total,note},stale){
     <div class="ga">${ACTION[s]}</div></div>`}).join("");
   const trs=by.map(p=>`<tr><td>${esc(p.name)}</td><td>${int(p.assign)}</td><td>${int(p.filed)}</td><td>${p.fileRate}%</td><td>${int(p.fix)}</td><td>${p.open}%</td><td>${p.days}</td><td>${int(p.backlog)}</td><td>${int(p.active)}</td><td>${int(p.urgent)}</td><td>${p.load}%</td><td><span class="badge" style="--c:var(--s-${p.status||"적정"})">${esc(p.status)}</span></td></tr>`);
   if(total)trs.push(`<tr class="tot"><td>합계/평균</td><td>${int(t.assign)}</td><td>${int(t.filed)}</td><td>${t.fileRate}%</td><td>${int(t.fix)}</td><td>${t.open}%</td><td>${t.days}</td><td>${int(t.backlog)}</td><td>${int(t.active)}</td><td>${int(t.urgent)}</td><td>${t.load}%</td><td></td></tr>`);
-  return `<h2>담당자별 업무 부하${stale?` <small class="flat" style="font-weight:400;font-size:13px">· 저장본(${SNAP_DATE} 기준)</small>`:""}</h2>
+  return `<h2>담당자별 업무 부하${stale?` <small class="flat" style="font-weight:400;font-size:13px">· ${esc(stale)}</small>`:""}</h2>
   <div class="kpis">${kpi("총 배정 건수",int(t.assign))}${kpi("접수율",(t.fileRate??"-")+"%")}${kpi("개시율",(t.open??"-")+"%")}${kpi("평균 소요기간",(t.days??"-")+"일")}${kpi("미접수 적체",int(t.backlog)+"건")}${kpi("긴급 보정",int(t.urgent)+"건")}${kpi("평균 체감 부하",(t.load??"-")+"%")}</div>
   <div class="gg">${groups}</div>${note?`<div class="gnote">${esc(note)}</div>`:""}
   <h2>담당자별 상세</h2><div class="panel">${table(["담당자","배정","접수","접수율","보정","개시율","소요(일)","적체","진행","긴급","체감 부하","상태"],trs)}</div>`;
 }
 
 /* ===== 불러오기 ===== */
-// 저장본을 먼저 바로 보여 주고, 시트 연결이 끝나는 대로 최신 값으로 바꿉니다.
-let STATE={t:ALL_SNAPSHOT,live:false};
+// 먼저 "이 브라우저에서 마지막으로 불러온 데이터"를 바로 보여 주고, 시트 연결이 끝나는 대로 최신 값으로 바꿉니다.
+// 처음 접속이라 보관된 데이터가 없으면 파일에 들어 있는 저장본을 임시로 보여 줍니다.
+const CACHE_KEY="report-last-data-v1";
+function readCache(){try{const o=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");return o&&o.t&&o.at?o:null}catch(e){return null}}
+function writeCache(t){try{localStorage.setItem(CACHE_KEY,JSON.stringify({t,at:Date.now()}))}catch(e){}}
+const looksLikeCSV=t=>t&&t.length>200&&!/^\s*<(!doctype|html)/i.test(t);
+const fmtAt=ms=>new Date(ms).toLocaleString("ko-KR");
+const CACHED=readCache();
+let STATE=CACHED?{t:CACHED.t,live:false,cached:true,at:CACHED.at}:{t:ALL_SNAPSHOT,live:false};
 let PENDING=false;
 async function fetchOnce(url,ms){
-  const ac=new AbortController(),timer=setTimeout(()=>ac.abort(),ms);
-  try{
-    const r=await fetch(url,{signal:ac.signal,cache:"no-store"});
+  // AbortController는 일부 미리보기 환경(iframe)에서 전달되지 못해 쓰지 않고, 제한 시간은 Promise.race로 처리합니다.
+  const run=(async()=>{
+    const r=await fetch(url,{cache:"no-store"});
     if(!r.ok){const e=new Error("HTTP "+r.status);e.fatal=true;throw e}
     return await r.text();
-  }finally{clearTimeout(timer)}
+  })();
+  run.catch(()=>{});
+  const timeout=new Promise((_,rej)=>setTimeout(()=>{const e=new Error("시간 초과");e.name="AbortError";rej(e)},ms));
+  return Promise.race([run,timeout]);
 }
 async function get(url,snap){
   let last;
   for(let i=0;i<2;i++){             // 시간 초과·네트워크 오류는 한 번 더 시도
-    try{return {t:await fetchOnce(url,20000),live:true}}
-    catch(e){last=e;if(e.fatal)break}
+    try{
+      const t=await fetchOnce(url,20000);
+      if(!looksLikeCSV(t)){const e=new Error("시트 응답이 올바르지 않습니다");e.fatal=true;throw e}
+      writeCache(t);
+      return {t,live:true,at:Date.now()};
+    }catch(e){last=e;if(e.fatal)break}
   }
-  return {t:snap,live:false,err:last&&last.name==="AbortError"?"시간 초과":(last&&last.message)||"알 수 없음"};
+  const c=readCache(),err=last&&last.name==="AbortError"?"시간 초과":(last&&last.message)||"알 수 없음";
+  return c?{t:c.t,live:false,cached:true,at:c.at,err}:{t:snap,live:false,err};
 }
 function paint(){
   const app=document.getElementById("app"),meta=document.getElementById("meta");
   let html="",D=null,W=null,werr=null;
   try{W=extractWork(STATE.t)}catch(e){werr=e}
   try{D=extractMain(STATE.t);html+=mainHTML(D,W)}catch(e){html+='<div class="msg">월별 실적을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
-  try{if(werr)throw werr;html+=workHTML(W,!STATE.live)}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
+  try{if(werr)throw werr;html+=workHTML(W,STATE.live?"":(STATE.cached?"마지막 데이터("+fmtAt(STATE.at)+" 기준)":"저장본("+SNAP_DATE+" 기준)"))}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   try{html+=mainHTML2(D||extractMain(STATE.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
   if(D&&D.heat)initTrend(D.heat);
-  const lab=PENDING?(STATE.live?"갱신 중…":"연결 중… (저장본을 임시로 표시)"):STATE.live?"실시간":"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+STATE.err+")";
-  meta.textContent="데이터: "+lab+" · "+new Date().toLocaleString("ko-KR")+(!PENDING&&!STATE.live?" — 연결하지 못해 저장된 값을 표시 중이며, 시트가 바뀌어도 갱신되지 않습니다.":"");
+  const lab=PENDING
+    ?(STATE.live?"갱신 중…":STATE.cached?"연결 중… (이 브라우저에서 마지막으로 불러온 데이터 "+fmtAt(STATE.at)+" 기준을 표시 중)":"연결 중… (저장본을 임시로 표시)")
+    :STATE.live?"실시간 ("+fmtAt(STATE.at)+" 기준)"
+    :STATE.cached?"마지막으로 불러온 데이터("+fmtAt(STATE.at)+" 기준 · 연결 오류: "+STATE.err+")"
+    :"저장본("+SNAP_DATE+" 기준 · 연결 오류: "+STATE.err+")";
+  meta.textContent="데이터: "+lab+(!PENDING&&!STATE.live?" — 연결하지 못해 이전 값을 표시 중이며, 시트가 바뀌어도 갱신되지 않습니다.":"");
 }
 function load(){
   PENDING=true;paint();
