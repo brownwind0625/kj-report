@@ -91,6 +91,9 @@ svg{width:100%;height:auto;display:block}
 .durrow{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;font-size:14px;padding:5px 0}
 .durrow .n{text-align:right;font-weight:700}
 @media(max-width:560px){.durrow{grid-template-columns:110px 1fr 56px}}
+.crow{display:grid;grid-template-columns:64px 1fr 250px;align-items:center;gap:10px;font-size:14px;padding:4px 0}
+.crow .n{text-align:right;color:var(--sub);font-size:13px}
+@media(max-width:560px){.crow{grid-template-columns:52px 1fr 150px}}
 </style>
 </head>
 <body>
@@ -107,27 +110,41 @@ const CONFIG = {
   // 통합 데이터 탭 (월별 실적, 담당자, 상담자, 법원, 업무 부하가 모두 이 탭에 있음)
   url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=872690463&single=true&output=csv"
 };
-const SNAP_DATE = "2026-10-16";
+const SNAP_DATE = "2026-10-20";
 
 /* ===== 저장본(연결 실패 시 표시) ===== */
 const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균,전체 개시율
-1월,125,110,980,98,43.7%
-2월,75,87,,,
+1월,125,110,"1,077",108,43.2%
+2월,77,87,,,
 3월,91,133,,,
 4월,135,133,,,
-5월,88,112,,,
-6월,115,131,,,
-7월,112,149,,,
+5월,92,112,,,
+6월,122,131,,,
+7월,116,149,,,
 8월,118,140,,,
-9월,91,110,,,
-10월,30,55,,,
+9월,117,110,,,
+10월,84,102,,,
 11월,0,0,,,
 12월,0,0,,,
 
-월 신청 소요 기간,22
+월 신청 소요 기간,21
 평균 개시 소요 기간,152
 평균 보정 횟수,5
-총 사건 처리 소요 기간,247
+총 사건 처리 소요 기간,250
+
+담당자,신규 배정,접수 완료,개시 완료,보정 제출 건수
+한예지,9,8,6,107
+주혜인,7,2,8,111
+이준서,11,10,5,89
+류예지,12,8,6,134
+김정석,5,4,3,60
+곽정윤,14,7,9,109
+최제현,11,11,7,98
+노두환,10,10,5,85
+박성희,6,7,7,92
+서소라,5,6,2,66
+이지은,12,11,2,28
+기타,12,0,0,8
 
 구분,한예지,주혜인,이준서,류예지,김정석,곽정윤,전명일,최제현,노두환,박성희,서소라,기타,이지은
 1월,17,15,14,14,7,13,1,3,1,12,11,5,0
@@ -139,62 +156,33 @@ const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균
 7월,16,14,15,17,6,16,0,17,11,9,12,8,8
 8월,13,15,16,13,10,13,0,13,13,11,10,12,12
 9월,12,6,10,10,8,4,0,13,13,12,10,11,11
-10월,2,1,6,8,4,7,0,5,7,3,3,5,5
+10월,9,7,11,12,5,14,0,11,10,6,5,12,12
 11월,0,0,0,0,0,0,0,0,0,0,0,0,0
 12월,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-담당자,25년 전체,25년(1~9월),26년(1~9월),증감(건),증감률,25년 월평균,26년 월평균,26년 점유율,성과 추이,26년 예상,연간 증감(건),연간 증감률,연간 전망
-박성희,110,78,78,0,0.0%,8.7,8.7,8.0%,- 보합,104,-6,-5.5%,▼ 감소
-서소라,94,71,68,-3,-4.2%,7.9,7.6,6.9%,▼ 감소,91,-3,-3.2%,▼ 감소
-곽정윤,138,95,103,+8,+8.4%,10.6,11.4,10.5%,▲ 성장,137,-1,-0.7%,▼ 감소
-한예지,162,129,118,-11,-8.5%,14.3,13.1,12.0%,▼ 감소,157,-5,-3.1%,▼ 감소
-류예지,165,117,112,-5,-4.3%,13.0,12.4,11.4%,▼ 감소,149,-16,-9.7%,▼ 감소
-이준서,125,82,104,+22,+26.8%,9.1,11.6,10.6%,▲ 성장,139,+14,+11.2%,▲ 성장
-최제현,36,14,78,+64,+457.1%,1.6,8.7,8.0%,▲ 성장,104,+68,+188.9%,▲ 성장
-노두환,40,18,79,+61,+338.9%,2.0,8.8,8.1%,▲ 성장,105,+65,+162.5%,▲ 성장
-주혜인,156,114,128,+14,+12.3%,12.7,14.2,13.1%,▲ 성장,171,+15,+9.6%,▲ 성장
-김정석,2,0,83,+83,-,0.0,9.2,8.5%,▲ 성장,111,+109,+5450.0%,▲ 성장
-합계 / 평균,"1,028",718,951,+233,+32.5%,79.8,105.7,97.0%,▲ 성장,"1,268",+240,+23.3%,▲ 성장
-
 건수 (수임월),수임월
 상담자,2026-01,2026-02,2026-03,2026-04,2026-05,2026-06,2026-07,2026-08,2026-09,2026-10,총계
-김미경,,,21,28,20,30,21,28,20,9,177
-김민규,12,14,27,29,27,29,33,24,20,8,223
-김재홍,,,,,,,5,19,18,5,47
-심현철,,,2,13,15,16,20,15,15,7,103
-전지연,52,42,83,61,50,55,70,54,36,26,529
-총계,64,56,133,131,112,130,149,140,109,55,"1,079"
-
-건수,진행상황,,,,,,,,,,,,,,
-상담자,개시,기각,보류,사임,인가,접수 완료,접수 착수,취소(접수전),취하(개시전),파산면책,폐지신청(개시후),총계,,상담자,개시율
-기타,3,,,,1,3,,,,,,7,,전지연,23.8%
-김미경,36,1,5,3,6,92,17,7,,,,167,,김민규,21.6%
-김민규,46,5,4,6,19,98,23,10,2,,,213,,김미경,21.6%
-김재홍,3,,1,,,32,6,1,1,,,44,,김재홍,6.8%
-심현철,22,1,,1,1,52,11,3,1,,,92,,심현철,23.9%
-재신청,,,,,,1,,,,,,1,,,
-전지연,123,3,15,7,54,237,44,23,7,2,2,517,,상담자,월 평균 수임건
-정우은,22,,,2,25,20,3,5,2,2,,81,,전지연,45.4
-총계,255,10,25,19,106,535,104,49,13,4,2,1122,,김민규,14.9
-,,,,,,,,,,,,,,김미경,18.7
-,,,,,,,,,,,,,,정우은,42.1
-,,,,,,,,,,,,,,심현철,11.5
-,,,,,,,,,,,,,,김재홍,11.0
+김미경,,,21,28,20,30,21,28,20,22,190
+김민규,12,14,27,29,27,29,33,24,20,14,229
+김재홍,,,,,,,5,19,18,13,55
+심현철,,,2,13,15,16,20,15,15,14,110
+전지연,52,42,83,61,50,55,70,54,36,39,542
+총계,64,56,133,131,112,130,149,140,109,102,"1,126"
 
 법원,평균 개시소요기간,평균 보정소요기간,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월,총 접수 건수
-서울,107.7,29.9,39,25,27,40,26,37,37,42,30,16,0,0,319
-의정부,179.4,91.9,15,12,7,20,9,16,11,11,18,1,0,0,120
-인천,117.3,16.8,22,9,9,22,10,11,9,13,10,3,0,0,118
-수원,73.2,26.7,29,20,28,30,28,28,35,32,24,7,0,0,261
+서울,108.6,29.3,39,25,27,40,27,40,40,42,35,38,0,0,353
+의정부,155.5,90.2,15,12,7,20,10,19,11,11,21,6,0,0,132
+인천,120.2,16.6,22,10,9,22,10,11,10,13,15,11,0,0,133
+수원,71.9,25.9,29,21,28,30,30,28,35,32,32,16,0,0,281
 춘천,67.3,30.2,0,0,1,2,1,0,0,1,0,0,0,0,5
 강릉,173.0,86.0,1,2,0,1,1,1,0,0,0,0,0,0,6
-대전,130.5,101.2,5,3,5,4,3,5,1,7,3,1,0,0,37
-청주,160.5,50.7,1,1,3,0,3,2,0,1,1,1,0,0,13
-대구,,94.8,2,2,1,7,1,6,3,3,1,0,0,0,26
-부산,130.8,7.5,3,0,2,1,3,4,2,2,1,0,0,0,18
+대전,130.5,92.5,5,3,5,4,3,6,1,7,4,3,0,0,41
+청주,153.3,50.7,1,1,3,0,3,2,0,1,2,2,0,0,15
+대구,136.0,85.7,2,2,1,7,1,6,3,3,2,1,0,0,28
+부산,130.8,6.6,3,0,2,1,3,4,2,2,1,4,0,0,22
 울산,,,0,0,0,0,0,0,0,0,0,0,0,0,0
 창원,93.5,3.6,0,0,1,0,0,0,2,0,2,0,0,0,5
-광주,75.5,17.9,3,0,2,5,2,5,9,3,0,1,0,0,30
+광주,83.5,16.6,3,0,2,5,2,5,9,3,2,3,0,0,34
 전주,159.3,54.1,4,1,2,1,1,0,0,3,0,0,0,0,12
 제주,209.0,17.3,0,0,2,2,0,0,0,0,0,0,0,0,4
 
@@ -218,19 +206,19 @@ const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균
 
 const WORK_SNAPSHOT = `담당자별 업무 현황 및 실질 업무 부하 분석 (2026년),,,,,,,,,,,,,,,
 담당자,배정 건수,접수 건수,접수율,보정 건수,사건당 보정,개시율,평균 소요기간,배정 점유율,배정 집중도(%),부하 상태,미접수 적체(2개월),진행 사건 수,긴급 보정(3일이하),종합 체감 부하(%),실질 업무 상태
-한예지,126,111,88.1%,65,0.6,42.0%,133.3,11.0%,106.4%,적정,1,33,0,45.3%,여유
-주혜인,121,116,95.9%,37,0.3,47.7%,157.1,10.5%,102.2%,적정,0,26,1,52.1%,여유
-이준서,124,90,72.6%,48,0.5,47.1%,134.7,10.8%,104.7%,적정,6,30,4,196.9%,심각
-류예지,116,96,82.8%,81,0.8,41.1%,151.4,10.1%,98.0%,적정,4,26,2,120.8%,과중
-김정석,94,83,88.3%,35,0.4,45.2%,79.6,8.2%,79.4%,여유,0,12,0,12.5%,여유
-곽정윤,105,86,81.9%,58,0.7,43.7%,169.3,9.2%,88.7%,적정,5,29,0,84.9%,적정
-최제현,107,69,64.5%,64,0.9,47.4%,139.5,9.3%,90.4%,적정,6,17,1,108.3%,적정
-노두환,102,76,74.5%,52,0.7,41.8%,141.6,8.9%,86.1%,적정,10,31,0,141.7%,심각
-박성희,91,70,76.9%,58,0.8,47.4%,180.8,7.9%,76.9%,여유,7,32,1,134.9%,심각
-서소라,83,60,72.3%,37,0.6,36.8%,170.7,7.2%,70.1%,여유,5,23,5,203.6%,심각
-이지은,36,26,72.2%,15,0.6,15.4%,36.5,3.1%,30.4%,여유,2,10,0,32.3%,여유
-기타,42,3,7.1%,4,1.3,0.0%,0.0,3.7%,35.5%,여유,0,1,0,1.0%,여유
-합계 / 평균,"1,147",886,77.2%,554,0.6,38.0%,124.5,100.0%,80.7%,-,46,270,14,94.5%,-
+한예지,133,112,84.2%,107,1.0,43.3%,134.7,11.0%,107.1%,적정,4,26,3,80.6%,적정
+주혜인,127,117,92.1%,111,0.9,50.4%,159.7,10.5%,102.3%,적정,1,16,5,59.7%,여유
+이준서,129,102,79.1%,89,0.9,42.2%,135.6,10.7%,103.9%,적정,6,32,6,123.0%,과중
+류예지,120,107,89.2%,134,1.3,40.7%,150.6,10.0%,96.6%,적정,4,26,4,87.4%,적정
+김정석,95,86,90.5%,60,0.7,46.0%,82.3,7.9%,76.5%,여유,1,13,3,42.8%,여유
+곽정윤,112,95,84.8%,109,1.1,47.3%,169.2,9.3%,90.2%,적정,8,30,8,149.3%,심각
+최제현,113,94,83.2%,98,1.0,43.7%,137.6,9.4%,91.0%,적정,4,21,6,95.1%,적정
+노두환,105,83,79.0%,85,1.0,41.9%,142.6,8.7%,84.5%,여유,9,25,7,144.4%,심각
+박성희,94,78,83.0%,92,1.2,44.2%,179.9,7.8%,75.7%,여유,5,27,6,109.6%,적정
+서소라,85,71,83.5%,66,0.9,36.7%,168.4,7.1%,68.4%,여유,2,21,4,66.4%,여유
+이지은,43,32,74.4%,28,0.9,15.6%,38.4,3.6%,34.6%,여유,6,13,1,67.4%,여유
+기타,49,3,6.1%,8,2.7,0.0%,0.0,4.1%,39.5%,여유,0,1,0,1.2%,여유
+합계 / 평균,"1,205",980,81.3%,987,1.0,37.7%,124.9,100.0%,80.9%,-,50,251,53,85.6%,-
 
 "*  종합 체감 부하: =0.35*(적체/직원 평균 3.2건) + 0.3*(진행/직원 평균 26.4건) + 0.35*(긴급보정/직원 평균 3.0건)
 * 100%란, 직원 평균 수치입니다. 즉, 직원의 평균 업무 상태와 동일하게 일하고 있다면 종합 체감 부하는 정확히 100%가 됩니다.
@@ -240,6 +228,7 @@ const WORK_SNAPSHOT = `담당자별 업무 현황 및 실질 업무 부하 분�
 2) 진행: 현재 각 담당자가 실제로 전담하여 수행 및 처리 중인 사건 수입니다.
 3) 긴급보정: 보정 유형 '명변', '이의', '기타' 및 기한 초과(제출 마감일 경과) 건을 제외하고, 법원 송달문서 제출 기한이 오늘부터 3일 이하로 임박한 송달 문서의 건수입니다.",,,,,,,,,,,,,,,
 `;
+
 const ALL_SNAPSHOT = MAIN_SNAPSHOT + "\n" + WORK_SNAPSHOT;
 
 /* ===== 공통 도구 ===== */
@@ -321,8 +310,10 @@ function extractMain(text){
   out.openRate=pairList("개시율");out.avgIntake=pairList("월 평균 수임건");
   h=F(r=>r[0]==="법원"&&r[1]==="평균 개시소요기간");
   if(h>=0)out.courts=until(h+1,r=>r[0]).map(r=>({name:r[0],open:num(r[1]),fix:num(r[2]),months:r.slice(3,15).map(v=>num(v)||0),total:num(r[15])||0}));
+  h=F(r=>r[0]==="담당자"&&r[1]==="신규 배정");
+  if(h>=0)out.cur=until(h+1,r=>r[0]).map(r=>({name:r[0],assign:num(r[1])||0,filed:num(r[2])||0,open:num(r[3])||0,fix:num(r[4])||0}));
   h=F(r=>r[0]==="법원명"&&r[1]==="1월");
-  if(h>=0)out.nat=until(h+1,r=>r[0]).map(r=>({name:r[0],total:num(r[13])||0}));
+  if(h>=0)out.nat=until(h+1,r=>r[0]).map(r=>({name:r[0],total:num(r[13])||0,months:r.slice(1,13).map(v=>num(v)||0)}));
   return out;
 }
 
@@ -330,6 +321,69 @@ function acChart(people){
   const ac=[...people].sort((a,b)=>(b.assign||0)-(a.assign||0));
   return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다.</span></div></div>`;
 }
+/* ===== 이번 달 담당자별 배정·접수 현황 ===== */
+// 시트의 '신규 배정' 표가 어느 달 값인지, 월별 배정표와 대조해서 찾습니다(달이 바뀌어도 시트 값에 맞춰 자동으로 바뀜).
+function curMonthLabel(d){
+  const t=new Date(),todayL=(t.getMonth()+1)+"월";
+  if(!d.heat||!d.cur)return todayL;
+  const cands=d.heat.rows.filter(r=>{
+    let diff=0,cmp=0;
+    d.heat.names.forEach((n,j)=>{const c=d.cur.find(x=>x.name===n);if(c){cmp++;diff+=Math.abs((r.v[j]||0)-c.assign)}});
+    return cmp>0&&diff===0;
+  });
+  if(!cands.length)return todayL;
+  if(cands.some(r=>r.l===todayL))return todayL;
+  const nz=cands.filter(r=>sum(r.v)>0);
+  return nz.length?nz[nz.length-1].l:todayL;
+}
+function curMonthChart(d){
+  if(!d.cur)return "";
+  const lab=curMonthLabel(d);
+  const rows=d.cur.filter(r=>!HIDE_NAMES.includes(r.name)&&(r.assign||r.filed)).sort((a,b)=>b.assign-a.assign);
+  if(!rows.length)return `<h2>${esc(lab)} 담당자별 배정·접수 현황</h2><div class="panel"><div class="msg">아직 ${esc(lab)}에 집계된 배정·접수 건이 없습니다.</div></div>`;
+  const tA=sum(rows.map(r=>r.assign)),tF=sum(rows.map(r=>r.filed));
+  return `<h2>${esc(lab)} 담당자별 배정·접수 현황</h2><div class="kpis">${kpi(lab+" 신규 배정",int(tA)+"건")}${kpi(lab+" 접수 완료",int(tF)+"건")}${kpi("접수 ÷ 배정",tA?(tF/tA*100).toFixed(0)+"%":"-")}</div>
+  <div class="panel">${colChart(rows.map(r=>r.name),[{name:"신규 배정",vals:rows.map(r=>r.assign),color:"var(--acc)"},{name:"접수 완료",vals:rows.map(r=>r.filed),color:"var(--acc2)"}])}<div class="legend"><span>시트의 담당자별 신규 배정·접수 완료 표 기준이며, 배정이 많은 순서입니다. 달이 바뀌면 시트 값에 맞춰 월 이름도 바뀝니다.</span></div></div>`;
+}
+
+/* ===== 전국 법원 통계와 kj 비교 ===== */
+function natChart(labels,nat,kj,share){
+  const W=900,H=320,L=62,R=56,T=30,B=52,n=labels.length,gw=(W-L-R)/n,bw=Math.min(44,gw*.55);
+  const nmax=Math.ceil(Math.max(...nat)/5000)*5000||5000,kmax=Math.max(20,Math.ceil(Math.max(...kj)/20)*20);
+  const sy=v=>T+(H-T-B)*(1-v/nmax),sy2=v=>T+(H-T-B)*(1-v/kmax),cx=i=>L+gw*i+gw/2;
+  let g="";
+  for(let k=0;k<=4;k++){const y=T+(H-T-B)*(1-k/4);
+    g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--acc)">${int(nmax*k/4)}</text><text x="${W-R+6}" y="${y+4}" font-size="12" fill="var(--acc2)">${int(kmax*k/4)}</text>`}
+  g+=`<text x="${L-6}" y="${T-14}" text-anchor="end" font-size="11" fill="var(--acc)">전국</text><text x="${W-R+6}" y="${T-14}" font-size="11" fill="var(--acc2)">kj</text>`;
+  nat.forEach((v,i)=>{const y=sy(v);
+    g+=`<rect x="${(cx(i)-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(H-B-y).toFixed(1)}" rx="3" fill="var(--acc)" opacity=".5"><title>${esc(labels[i])} 전국 접수 ${int(v)}건</title></rect>`;
+    g+=`<text x="${cx(i).toFixed(1)}" y="${(H-B-6).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="var(--ink)">${int(v)}</text>`;
+    g+=`<text x="${cx(i)}" y="${H-B+17}" text-anchor="middle" font-size="12" fill="var(--sub)">${esc(labels[i])}</text>`;
+    g+=`<text x="${cx(i)}" y="${H-B+34}" text-anchor="middle" font-size="11" fill="var(--acc2)">${share[i].toFixed(2)}%</text>`});
+  const pts=kj.map((v,i)=>[cx(i),sy2(v)]);
+  g+=`<path d="${pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ")}" fill="none" stroke="var(--acc2)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{g+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="var(--acc2)"><title>${esc(labels[i])} kj 접수 ${int(kj[i])}건 (전국 대비 ${share[i].toFixed(2)}%)</title></circle><text x="${p[0].toFixed(1)}" y="${(p[1]-9).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--acc2)">${int(kj[i])}</text>`});
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="월별 전국 접수와 kj 접수">${g}</svg>`;
+}
+function natCompare(d){
+  if(!d.courts||!d.nat||!d.nat.length)return "";
+  const nm=Object.fromEntries(d.nat.map(n=>[n.name,n]));
+  const natM=Array.from({length:12},(_,i)=>sum(d.nat.map(n=>n.months[i]||0)));
+  const avail=natM.map((v,i)=>v>0?i:-1).filter(i=>i>=0);
+  if(!avail.length)return "";
+  const kjc=d.courts.filter(c=>nm[c.name]);
+  const labels=avail.map(i=>(i+1)+"월"),natV=avail.map(i=>natM[i]),kjV=avail.map(i=>sum(kjc.map(c=>c.months[i]||0)));
+  const share=natV.map((v,k)=>v?kjV[k]/v*100:0),NT=sum(natV),KT=sum(kjV);
+  const range=labels[0]+"~"+labels[labels.length-1];
+  const rows=kjc.map(c=>{const n=nm[c.name],nat=sum(avail.map(i=>n.months[i]||0)),kj=sum(avail.map(i=>c.months[i]||0));return {name:c.name,nat,kj,sh:nat?kj/nat*100:0}})
+    .filter(r=>r.kj>0&&r.nat>0).sort((a,b)=>b.sh-a.sh);
+  const mx=Math.max(0.01,...rows.map(r=>r.sh)),mk=Math.max(1,...rows.map(r=>r.kj));
+  return `<h2>전국 법원 통계와 kj 비교 <small class="flat" style="font-weight:400;font-size:13px">· ${range}</small></h2>
+  <div class="kpis">${kpi("전국 접수 ("+range+")",int(NT)+"건")}${kpi("kj 접수 (같은 기간)",int(KT)+"건")}${kpi("kj 전국 점유율",NT?(KT/NT*100).toFixed(2)+"%":"-")}${rows[0]?kpi("점유율 최고 법원",esc(rows[0].name)+" "+rows[0].sh.toFixed(2)+"%"):""}</div>
+  <div class="panel"><h3>월별 전국 접수와 kj 접수</h3>${natChart(labels,natV,kjV,share)}<div class="legend"><span><i style="background:var(--acc);opacity:.5"></i>전국 접수 건수(왼쪽 축)</span><span><i style="background:var(--acc2)"></i>kj 접수 건수(오른쪽 축)</span><span>월 아래 초록 숫자: kj 점유율(kj ÷ 전국)</span></div></div>
+  <div class="panel" style="margin-top:10px"><h3>법원별 kj 점유율과 접수 건수</h3>${rows.map(r=>`<div class="crow"><span>${esc(r.name)}</span><div><div class="track"><div class="fill" style="width:${(r.sh/mx*100).toFixed(1)}%;background:var(--acc2)"></div></div><div class="track" style="margin-top:3px"><div class="fill" style="width:${(r.kj/mk*100).toFixed(1)}%;background:var(--acc)"></div></div></div><span class="n">${r.sh.toFixed(2)}% · kj ${int(r.kj)} / 전국 ${int(r.nat)}</span></div>`).join("")}<div class="legend"><span><i style="background:var(--acc2)"></i>kj 점유율(위)</span><span><i style="background:var(--acc)"></i>kj 접수 건수(아래)</span><span>전국 통계가 있는 달(${range})만 비교했으며, 접수가 적은 법원은 점유율이 한두 건에 크게 달라질 수 있습니다.</span></div></div>`;
+}
+
 /* ===== 월별 실적 추이 ===== */
 function monthInfo(label){            // 이번 달이면 진행 중인 달로 처리
   const mm=/^(\d+)월/.exec(label);if(!mm)return null;
@@ -412,6 +466,7 @@ function mainHTML2(d){
   let html="";
   /* 담당자별 월별 배정 추이 */
   if(d.heat){html+=`<h2>담당자별 월별 사건 배정 추이</h2><div class="panel"><div class="chips" id="trend-chips"></div><div id="trend-chart"></div></div>`}
+  html+=curMonthChart(d);
   /* 상담자 */
   if(d.counsel){
     const tot=d.counsel.rows.find(r=>r[0]==="총계"),rows=d.counsel.rows.filter(r=>r[0]!=="총계");
@@ -422,6 +477,7 @@ function mainHTML2(d){
     <div class="panel" style="margin-top:10px"><h3>상담자별 수임 합계</h3><div class="bars">${byTotal.map(r=>bar(r[0],num(r[r.length-1])||0,mt,int(num(r[r.length-1])))).join("")}</div></div>`;
   }
   html+=courtBoard(d);
+  html+=natCompare(d);
   return html;
 }
 
