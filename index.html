@@ -94,6 +94,12 @@ svg{width:100%;height:auto;display:block}
 .crow{display:grid;grid-template-columns:64px 1fr 250px;align-items:center;gap:10px;font-size:14px;padding:4px 0}
 .crow .n{text-align:right;color:var(--sub);font-size:13px}
 @media(max-width:560px){.crow{grid-template-columns:52px 1fr 150px}}
+.stk{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg)}
+.stk span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;min-width:0;overflow:hidden}
+.frow{display:grid;grid-template-columns:70px 1fr 90px;gap:10px;align-items:center;padding:5px 0;font-size:14px}
+.frow.wide{grid-template-columns:70px 1fr 190px}
+.frow .n{text-align:right;color:var(--sub);font-size:13px}
+@media(max-width:560px){.frow{grid-template-columns:56px 1fr 70px}.frow.wide{grid-template-columns:56px 1fr 130px}}
 </style>
 </head>
 <body>
@@ -110,7 +116,7 @@ const CONFIG = {
   // 통합 데이터 탭 (월별 실적, 담당자, 상담자, 법원, 업무 부하가 모두 이 탭에 있음)
   url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTADdE6vzjQ4FlvnsZmIEOGfgg5sXgHucUR32bYbXfFt7Zz7HGxy8hpQcMRB5xhXrnm1V6QoT7TT0TM/pub?gid=872690463&single=true&output=csv"
 };
-const SNAP_DATE = "2026-10-20";
+const SNAP_DATE = "2026-11-04";
 
 /* ===== 저장본(연결 실패 시 표시) ===== */
 const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균,전체 개시율
@@ -202,6 +208,63 @@ const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균
 광주,655,544,838,892,756,889,978,938,0,0,0,0,"6,490"
 전주,446,396,405,355,302,350,326,284,0,0,0,0,"2,864"
 제주,183,163,225,218,158,182,158,158,0,0,0,0,"1,445"
+
+📌 [섹션 5-1] 담당자별 월별 보정 수령 건수 (2026년 기준 / 송달일 J열 기준),,,,,,,,,,,,,
+담당자,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월,합계
+곽정윤,133,144,136,204,150,154,186,171,117,139,22,0,"1,556"
+김정석,3,5,36,33,36,58,47,59,68,81,9,0,435
+노두환,14,36,34,52,56,93,79,101,106,92,15,0,678
+류예지,123,128,124,142,135,120,155,131,159,153,19,0,"1,389"
+박성희,108,88,107,149,112,116,98,107,79,105,10,0,"1,079"
+서소라,79,74,79,80,90,93,80,93,80,73,20,0,841
+양은진,0,0,0,0,0,0,0,0,0,0,0,0,0
+유수민,107,95,99,0,0,0,0,0,0,0,0,0,301
+이준서,98,139,125,130,79,115,96,125,96,115,8,0,"1,126"
+이지은,0,0,0,0,0,0,4,12,31,44,11,0,102
+전명일,2,6,20,31,25,38,7,0,0,0,0,0,129
+주혜인,146,104,133,126,145,149,147,133,155,144,18,0,"1,400"
+진혜진,0,0,0,0,0,0,0,0,0,0,0,0,0
+최제현,22,42,78,67,59,88,83,96,89,117,15,0,756
+한예지,106,116,116,117,106,119,130,134,122,128,11,0,"1,205"
+총합계,941,977,"1,087","1,131",993,"1,143","1,112","1,162","1,102","1,191",158,0,"10,997"
+
+📌 [섹션 5-2] 담당자별 보정 유형 점유 비중 (%) (보정 시트 O열 유형 기준),,,,,,,,,,,
+담당자,권고,명변,명령,이의,인지대,예납,결정,주소,기타,총건수,합계
+곽정윤,23.7%,26.1%,4.7%,9.7%,1.8%,2.4%,17.7%,2.6%,11.3%,"1,779",100.0%
+김정석,24.4%,26.4%,6.4%,6.2%,2.5%,0.9%,28.3%,1.1%,3.7%,435,100.0%
+노두환,20.6%,27.7%,4.1%,8.8%,3.7%,3.7%,23.6%,2.9%,4.7%,678,100.0%
+류예지,25.2%,25.8%,6.1%,8.4%,1.8%,2.8%,20.0%,2.0%,7.8%,"1,632",100.0%
+박성희,23.7%,24.4%,5.5%,11.2%,1.3%,3.2%,17.4%,3.9%,9.5%,"1,264",100.0%
+서소라,24.3%,25.8%,3.7%,10.1%,2.4%,3.8%,20.0%,1.7%,8.3%,"1,013",100.0%
+양은진,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0,0.0%
+유수민,20.4%,29.6%,6.0%,9.7%,2.9%,1.9%,24.1%,0.2%,5.3%,486,100.0%
+이준서,23.0%,28.2%,6.5%,8.2%,3.3%,1.0%,22.0%,1.3%,6.4%,"1,275",100.0%
+이지은,25.5%,12.7%,3.9%,5.9%,2.9%,5.9%,41.2%,2.0%,0.0%,102,100.0%
+전명일,21.7%,17.1%,6.2%,2.3%,2.3%,5.4%,37.2%,1.6%,6.2%,129,100.0%
+주혜인,23.8%,27.6%,5.2%,9.5%,2.2%,2.7%,20.9%,3.0%,5.0%,"1,615",100.0%
+진혜진,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0.0%,0,0.0%
+최제현,24.0%,26.9%,5.7%,8.1%,2.5%,2.5%,24.2%,1.5%,4.6%,757,100.0%
+한예지,20.6%,32.5%,5.7%,9.5%,1.6%,2.0%,21.7%,0.7%,5.8%,"1,439",100.0%
+전체평균/총계,24.3%,28.7%,5.7%,9.6%,2.3%,2.7%,22.1%,2.2%,2.4%,"12,604",100.0%
+
+📌 [섹션 5-3] 담당자별 실시간 보정 진행 현황 및 미처리 잔여 건수 (보정 시트 C열 기준),,,,,,,
+담당자,미열람,진행(시작),미처리 잔여,종료(완료),사임·폐지,전체 건수,처리율
+곽정윤,8,45,53,"1,710",16,"1,779",97.0%
+김정석,8,14,22,413,0,435,94.9%
+노두환,3,61,64,614,0,678,90.6%
+류예지,7,44,51,"1,544",37,"1,632",96.9%
+박성희,5,33,38,"1,223",3,"1,264",97.0%
+서소라,8,46,54,952,7,"1,013",94.7%
+양은진,0,0,0,0,0,0,0.0%
+유수민,0,0,0,481,5,486,100.0%
+이준서,11,40,51,"1,202",22,"1,275",96.0%
+이지은,14,18,32,70,0,102,68.6%
+전명일,0,0,0,129,0,129,100.0%
+주혜인,10,28,38,"1,577",0,"1,615",97.6%
+진혜진,0,0,0,0,0,0,0.0%
+최제현,7,18,25,730,2,757,96.7%
+한예지,25,61,86,"1,336",17,"1,439",94.0%
+총합계,106,408,514,"11,981",109,"12,604",95.9%
 `;
 
 const WORK_SNAPSHOT = `담당자별 업무 현황 및 실질 업무 부하 분석 (2026년),,,,,,,,,,,,,,,
@@ -277,6 +340,26 @@ function colChart(labels,series){
 }
 
 /* ===== 통합 데이터 탭 해석 ===== */
+function parseFixSections(A){
+  const out={},isTot=n=>/^(총합계|전체)/.test(n);
+  const sec=key=>{
+    const i=A.findIndex(r=>r.some(v=>v.includes(key)));if(i<0)return null;
+    const c=A[i].findIndex(v=>v.includes(key)),head=(A[i+1]||[]).slice(c).map(x=>x.trim());
+    if(head[0]!=="담당자")return null;
+    const rows=[];for(let k=i+2;k<A.length&&(A[k][c]||"").trim();k++)rows.push(A[k].slice(c).map(x=>x.trim()));
+    return {head,rows};
+  };
+  let sc=sec("[섹션 5-1]");
+  if(sc){const mi=[];sc.head.forEach((h,j)=>{if(/^\d+월$/.test(h))mi.push(j)});
+    out.monthly={months:mi.map(j=>sc.head[j]),rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],v:mi.map(j=>num(r[j])||0)}))}}
+  sc=sec("[섹션 5-2]");
+  if(sc){const types=sc.head.filter(h=>h!=="담당자"&&h!=="총건수"&&h!=="합계"),ti=sc.head.indexOf("총건수");
+    out.types={types,rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],total:num(r[ti])||0,v:types.map(t=>num(r[sc.head.indexOf(t)])||0)}))}}
+  sc=sec("[섹션 5-3]");
+  if(sc){const g=(r,n)=>num(r[sc.head.indexOf(n)])||0;
+    out.status={rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],unread:g(r,"미열람"),open:g(r,"진행(시작)"),rest:g(r,"미처리 잔여"),done:g(r,"종료(완료)"),quit:g(r,"사임·폐지"),total:g(r,"전체 건수")}))}}
+  return out;
+}
 function extractMain(text){
   const A=parseCSV(text);
   const F=(f,from=0)=>{for(let i=from;i<A.length;i++)if(f(A[i]))return i;return -1};
@@ -314,11 +397,12 @@ function extractMain(text){
   if(h>=0)out.cur=until(h+1,r=>r[0]).map(r=>({name:r[0],assign:num(r[1])||0,filed:num(r[2])||0,open:num(r[3])||0,fix:num(r[4])||0}));
   h=F(r=>r[0]==="법원명"&&r[1]==="1월");
   if(h>=0)out.nat=until(h+1,r=>r[0]).map(r=>({name:r[0],total:num(r[13])||0,months:r.slice(1,13).map(v=>num(v)||0)}));
+  out.fix=parseFixSections(A);
   return out;
 }
 
 function acChart(people){
-  const ac=[...people].sort((a,b)=>(b.assign||0)-(a.assign||0));
+  const ac=people.filter(p=>p.assign||p.filed).sort((a,b)=>(b.assign||0)-(a.assign||0));
   return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다.</span></div></div>`;
 }
 /* ===== 이번 달 담당자별 배정·접수 현황 ===== */
@@ -344,6 +428,60 @@ function curMonthChart(d){
   const tA=sum(rows.map(r=>r.assign)),tF=sum(rows.map(r=>r.filed));
   return `<h2>${esc(lab)} 담당자별 배정·접수 현황</h2><div class="kpis">${kpi(lab+" 신규 배정",int(tA)+"건")}${kpi(lab+" 접수 완료",int(tF)+"건")}${kpi("접수 ÷ 배정",tA?(tF/tA*100).toFixed(0)+"%":"-")}</div>
   <div class="panel">${colChart(rows.map(r=>r.name),[{name:"신규 배정",vals:rows.map(r=>r.assign),color:"var(--acc)"},{name:"접수 완료",vals:rows.map(r=>r.filed),color:"var(--acc2)"}])}<div class="legend"><span>시트의 담당자별 신규 배정·접수 완료 표 기준이며, 배정이 많은 순서입니다. 달이 바뀌면 시트 값에 맞춰 월 이름도 바뀝니다.</span></div></div>`;
+}
+
+/* ===== 보정 현황 (섹션 5-1 ~ 5-3) ===== */
+const FIX_COLORS=["#2456a6","#2f9a7a","#d9a21b","#c43a31","#8a4fd0","#6c8ebf","#8f98a5","#d9786f","#b8860b"];
+function fixHTML(d){
+  const f=d.fix;if(!f||(!f.monthly&&!f.types&&!f.status))return "";
+  const vis=n=>!HIDE_NAMES.includes(n);
+  const card=(k,v,sub)=>`<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${v}</div>${sub?`<div class="cmpk">${sub}</div>`:""}</div>`;
+  let html="";
+  // 5-1 월별 보정 수령
+  if(f.monthly){
+    const rows=f.monthly.rows.filter(r=>vis(r.name)&&sum(r.v)>0),months=f.monthly.months;
+    const tot=months.map((_,i)=>sum(rows.map(r=>r.v[i])));
+    const lastI=tot.map((v,i)=>v>0?i:-1).filter(i=>i>=0).pop();
+    if(lastI!==undefined&&rows.length){
+      const idx=months.map((_,i)=>i).filter(i=>i<=lastI),inf=monthInfo(months[lastI]);
+      const done=inf?idx.slice(0,-1):idx,T=sum(idx.map(i=>tot[i]));
+      const avg=done.length?sum(done.map(i=>tot[i]))/done.length:null;
+      const labels=idx.map(i=>months[i]+(inf&&i===lastI?"*":""));
+      const max=Math.max(1,...rows.flatMap(r=>idx.map(i=>r.v[i])));
+      const sorted=[...rows].sort((a,b)=>sum(b.v)-sum(a.v));
+      const trs=sorted.map(r=>`<tr><td>${esc(r.name)}</td>${idx.map(i=>`<td ${heat(r.v[i],max)}>${r.v[i]||"-"}</td>`).join("")}<td><b>${int(sum(idx.map(i=>r.v[i])))}</b></td></tr>`);
+      trs.push(`<tr class="tot"><td>합계</td>${idx.map(i=>`<td>${int(tot[i])}</td>`).join("")}<td>${int(T)}</td></tr>`);
+      html+=`<h2>보정 수령 현황</h2><div class="kpis">${card("올해 보정 수령(누적)",int(T)+"건")}${avg!=null?card("월평균 수령",int(avg)+"건",esc(months[done[0]])+"~"+esc(months[done[done.length-1]])+" 완료된 달"):""}${card(months[lastI]+" 수령"+(inf?" (진행 중)":""),int(tot[lastI])+"건",idx.length>1?"전월 "+int(tot[lastI-1])+"건":"")}</div>
+      <div class="panel">${colChart(labels,[{name:"보정 수령",vals:idx.map(i=>tot[i]),color:"var(--acc)"}])}<div class="legend"><span>송달일 기준 월별 보정 수령 건수의 담당자 합계입니다.${inf?" * 진행 중인 달은 아직 끝나지 않은 값입니다.":""}</span></div></div>
+      <div class="panel" style="margin-top:10px"><h3>담당자별 월별 보정 수령</h3><div class="tbl"><table><thead><tr><th>담당자</th>${idx.map(i=>`<th>${esc(months[i])}</th>`).join("")}<th>합계</th></tr></thead><tbody>${trs.join("")}</tbody></table></div><div class="legend"><span>색이 진할수록 해당 월 수령 건수가 많습니다. 배정이 시작되지 않은 담당자는 표시하지 않습니다.</span></div></div>`;
+    }
+  }
+  // 5-2 보정 유형 비중
+  if(f.types){
+    const rows=f.types.rows.filter(r=>vis(r.name)&&r.total>0).sort((a,b)=>b.total-a.total),types=f.types.types;
+    if(rows.length){
+      const T=sum(rows.map(r=>r.total)),avg=types.map((_,k)=>sum(rows.map(r=>r.v[k]*r.total))/T);
+      const stk=vals=>`<div class="stk">${vals.map((v,k)=>v>0?`<span style="width:${v.toFixed(2)}%;background:${FIX_COLORS[k%FIX_COLORS.length]}" title="${esc(types[k])} ${v.toFixed(1)}%">${v>=8?Math.round(v)+"%":""}</span>`:"").join("")}</div>`;
+      html+=`<h2>보정 유형별 비중</h2><div class="panel">
+      <div class="frow"><span><b>전체</b></span>${stk(avg)}<span class="n"><b>${int(T)}건</b></span></div>
+      ${rows.map(r=>`<div class="frow"><span>${esc(r.name)}</span>${stk(r.v)}<span class="n">${int(r.total)}건</span></div>`).join("")}
+      <div class="legend">${types.map((t,k)=>`<span><i style="background:${FIX_COLORS[k%FIX_COLORS.length]}"></i>${esc(t)}</span>`).join("")}</div>
+      <div class="legend" style="margin-top:4px"><span>전체는 담당자별 건수로 가중한 평균입니다. 좁은 구간은 마우스를 올리면 비율이 보입니다.</span></div></div>`;
+    }
+  }
+  // 5-3 미처리 잔여
+  if(f.status){
+    const rows=f.status.rows.filter(r=>vis(r.name)&&r.total>0).sort((a,b)=>b.rest-a.rest);
+    if(rows.length){
+      const R=sum(rows.map(r=>r.rest)),U=sum(rows.map(r=>r.unread)),O=sum(rows.map(r=>r.open)),TT=sum(rows.map(r=>r.total)),DN=sum(rows.map(r=>r.done+r.quit));
+      const mx=Math.max(1,...rows.map(r=>r.rest));
+      html+=`<h2>보정 미처리 잔여 현황</h2><div class="kpis">${card("미처리 잔여",int(R)+"건")}${card("미열람",int(U)+"건")}${card("진행(시작)",int(O)+"건")}${card("처리율",TT?(DN/TT*100).toFixed(1)+"%":"-","종료·사임·폐지 ÷ 전체")}</div>
+      <div class="panel">${rows.map(r=>{const rate=r.total?((r.done+r.quit)/r.total*100).toFixed(1):"-";
+        return `<div class="frow wide"><span>${esc(r.name)}</span><div class="stk" style="width:${(r.rest/mx*100).toFixed(1)}%;min-width:${r.rest?24:0}px">${r.unread?`<span style="flex:${r.unread};background:var(--s-과중)" title="미열람 ${r.unread}건">${r.unread}</span>`:""}${r.open?`<span style="flex:${r.open};background:var(--acc)" title="진행(시작) ${r.open}건">${r.open}</span>`:""}</div><span class="n">미처리 ${r.rest}건 · 처리율 ${rate}%</span></div>`}).join("")}
+      <div class="legend"><span><i style="background:var(--s-과중)"></i>미열람</span><span><i style="background:var(--acc)"></i>진행(시작)</span><span>막대 길이는 미처리 잔여 건수(미열람 + 진행)이며, 많은 순서입니다. 처리율 = (종료 + 사임·폐지) ÷ 전체 건수입니다.</span></div></div>`;
+    }
+  }
+  return html;
 }
 
 /* ===== 전국 법원 통계와 kj 비교 ===== */
@@ -467,6 +605,7 @@ function mainHTML2(d){
   /* 담당자별 월별 배정 추이 */
   if(d.heat){html+=`<h2>담당자별 월별 사건 배정 추이</h2><div class="panel"><div class="chips" id="trend-chips"></div><div id="trend-chart"></div></div>`}
   html+=curMonthChart(d);
+  html+=fixHTML(d);
   /* 상담자 */
   if(d.counsel){
     const tot=d.counsel.rows.find(r=>r[0]==="총계"),rows=d.counsel.rows.filter(r=>r[0]!=="총계");
@@ -482,19 +621,20 @@ function mainHTML2(d){
 }
 
 /* ===== 담당자별 월별 배정 추이 (선 그래프) ===== */
-const PALETTE=["#2456a6","#d9531e","#2f9a7a","#8a4fd0","#c9a100","#d03f7a","#4a90c4","#7a8a00","#a0522d","#008b8b","#6b6bd1","#d2691e","#5f7f5f"];
+const PALETTE=["#2456a6","#d9531e","#2f9a7a","#8a4fd0","#c9a100","#d03f7a","#4a90c4","#7a8a00","#a0522d","#008b8b","#6b6bd1","#d2691e","#5f7f5f","#b8860b","#c0392b","#3f8f3f","#7d3c98"];
 let TREND=null;
 function lineChart(labels,series){
   const W=900,H=280,L=40,R=14,T=12,B=30;
-  const max=Math.max(5,...series.flatMap(s=>s.vals)),top=Math.ceil(max/5)*5,n=labels.length;
+  const max=Math.max(5,...series.flatMap(s=>s.vals.filter(v=>v!=null))),top=Math.ceil(max/5)*5,n=labels.length;
   const sx=i=>L+(W-L-R)*(n>1?i/(n-1):.5),sy=v=>T+(H-T-B)*(1-v/top);
   let g="";
   for(let k=0;k<=5;k++){const v=top*k/5,y=sy(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--sub)">${Math.round(v)}</text>`}
   labels.forEach((l,i)=>{g+=`<text x="${sx(i)}" y="${H-10}" text-anchor="middle" font-size="12" fill="var(--sub)">${esc(l)}</text>`});
   series.forEach(s=>{
-    const d=s.vals.map((v,i)=>(i?"L":"M")+sx(i).toFixed(1)+" "+sy(v).toFixed(1)).join(" ");
+    let d="",pen=false;
+    s.vals.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?"L":"M")+sx(i).toFixed(1)+" "+sy(v).toFixed(1)+" ";pen=true});
     g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.dash?2:2.5}" ${s.dash?'stroke-dasharray="6 5"':""} stroke-linejoin="round"/>`;
-    if(!s.dash)s.vals.forEach((v,i)=>{g+=`<circle cx="${sx(i)}" cy="${sy(v)}" r="3.5" fill="${s.color}"><title>${esc(s.name)} ${esc(labels[i])}: ${v}건</title></circle>`});
+    if(!s.dash)s.vals.forEach((v,i)=>{if(v==null)return;g+=`<circle cx="${sx(i)}" cy="${sy(v)}" r="3.5" fill="${s.color}"><title>${esc(s.name)} ${esc(labels[i])}: ${v}건</title></circle>`});
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="담당자별 월별 배정 추이">${g}</svg><div class="legend">${series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`;
 }
@@ -502,20 +642,23 @@ const TREND_HIDE=HIDE_NAMES;
 function initTrend(h){
   const idx=h.names.map((n,j)=>j).filter(j=>!TREND_HIDE.includes(h.names[j]));
   const rows=h.rows.filter(r=>sum(idx.map(j=>r.v[j]))>0);
-  const totals=Object.fromEntries(idx.map(j=>[j,sum(rows.map(r=>r.v[j]))]));
-  const top3=[...idx].sort((a,b)=>totals[b]-totals[a]).slice(0,3);
-  TREND={h,rows,idx,sel:new Set(top3)};
+  // 담당자별 첫 배정이 있는 달(그 전에는 선을 그리지 않고, 팀 평균에도 넣지 않음)
+  const start={};idx.forEach(j=>{const i=rows.findIndex(r=>r.v[j]>0);start[j]=i<0?Infinity:i});
+  const shown=idx.filter(j=>isFinite(start[j]));
+  const totals=Object.fromEntries(shown.map(j=>[j,sum(rows.map(r=>r.v[j]))]));
+  const top3=[...shown].sort((a,b)=>totals[b]-totals[a]).slice(0,3);
+  TREND={h,rows,idx,start,shown,sel:new Set(top3)};
   const box=document.getElementById("trend-chips");if(!box)return;
-  box.innerHTML=idx.map(j=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(h.names[j])}</button>`).join("");
+  box.innerHTML=shown.map(j=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(h.names[j])}</button>`).join("");
   box.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;TREND.sel.has(j)?TREND.sel.delete(j):TREND.sel.add(j);b.setAttribute("aria-pressed",TREND.sel.has(j));drawTrend()});
   drawTrend();
 }
 function drawTrend(){
-  const {h,rows,idx,sel}=TREND,el=document.getElementById("trend-chart");if(!el)return;
-  const avg=rows.map(r=>+(sum(idx.map(j=>r.v[j]))/idx.length).toFixed(1));
-  const series=[...sel].sort((a,b)=>a-b).map(j=>({name:h.names[j],vals:rows.map(r=>r.v[j]),color:PALETTE[j%PALETTE.length]}));
+  const {h,rows,idx,start,sel}=TREND,el=document.getElementById("trend-chart");if(!el)return;
+  const avg=rows.map((r,i)=>{const act=idx.filter(j=>start[j]<=i);return act.length?+(sum(act.map(j=>r.v[j]))/act.length).toFixed(1):0});
+  const series=[...sel].sort((a,b)=>a-b).map(j=>({name:h.names[j],vals:rows.map((r,i)=>i<start[j]?null:r.v[j]),color:PALETTE[j%PALETTE.length]}));
   series.push({name:"담당자 평균",vals:avg,color:"var(--sub)",dash:true});
-  el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다.</span></div>';
+  el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다. 팀 평균은 해당 월까지 배정을 시작한 담당자만으로 계산합니다.</span></div>';
 }
 
 /* ===== 법원별 접수·소요기간 스코어보드 ===== */
