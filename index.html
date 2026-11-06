@@ -97,9 +97,9 @@ svg{width:100%;height:auto;display:block}
 .stk{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg)}
 .stk span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;min-width:0;overflow:hidden}
 .frow{display:grid;grid-template-columns:70px 1fr 90px;gap:10px;align-items:center;padding:5px 0;font-size:14px}
-.frow.wide{grid-template-columns:70px 1fr 190px}
+.frow.wide{grid-template-columns:70px 1fr 300px}
 .frow .n{text-align:right;color:var(--sub);font-size:13px}
-@media(max-width:560px){.frow{grid-template-columns:56px 1fr 70px}.frow.wide{grid-template-columns:56px 1fr 130px}}
+@media(max-width:560px){.frow{grid-template-columns:56px 1fr 70px}.frow.wide{grid-template-columns:56px 1fr 170px}}
 </style>
 </head>
 <body>
@@ -296,6 +296,8 @@ const ALL_SNAPSHOT = MAIN_SNAPSHOT + "\n" + WORK_SNAPSHOT;
 
 /* ===== 공통 도구 ===== */
 const HIDE_NAMES=["기타","전명일","유수민"];   // 화면에서 제외할 담당자
+const SHOW_ALWAYS=["진혜진","양은진"];       // 아직 배정·보정이 0건이어도 모든 섹션에 표시할 담당자
+const keep=n=>SHOW_ALWAYS.includes(n);
 const STATUS=["심각","과중","적정","여유"];
 const RULE={심각:"부하 130% 이상",과중:"부하 110%~130%",적정:"부하 80%~110%",여유:"부하 80% 미만"};
 const ACTION={심각:"신규 배정 즉시 중단 및 보정 업무 긴급 지원",과중:"업무량 실시간 모니터링 및 추가 배정 억제",적정:"표준 업무 사이클 및 현재 배정 비율 유지",여유:"신규 사건 우선 배정 및 보정 이관 수용"};
@@ -356,8 +358,12 @@ function parseFixSections(A){
   if(sc){const types=sc.head.filter(h=>h!=="담당자"&&h!=="총건수"&&h!=="합계"),ti=sc.head.indexOf("총건수");
     out.types={types,rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],total:num(r[ti])||0,v:types.map(t=>num(r[sc.head.indexOf(t)])||0)}))}}
   sc=sec("[섹션 5-3]");
-  if(sc){const g=(r,n)=>num(r[sc.head.indexOf(n)])||0;
-    out.status={rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],unread:g(r,"미열람"),open:g(r,"진행(시작)"),rest:g(r,"미처리 잔여"),done:g(r,"종료(완료)"),quit:g(r,"사임·폐지"),total:g(r,"전체 건수")}))}}
+  if(sc){
+    const gi=(...ns)=>{for(const n of ns){const k=sc.head.indexOf(n);if(k>=0)return k}return -1};
+    const g=(r,...ns)=>{const k=gi(...ns);return k<0?0:(num(r[k])||0)};
+    const ko=sc.head.findIndex(h=>/기한\s*초과/.test(h));
+    out.status={hasOver:ko>=0,rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],unread:g(r,"미열람"),open:g(r,"시작","진행(시작)"),rest:g(r,"보정 건수","미처리 잔여"),done:g(r,"종료(완료)","종료"),quit:g(r,"사임·폐지"),total:g(r,"전체 건수"),over:ko>=0?(num(r[ko])||0):null}))};
+  }
   return out;
 }
 function extractMain(text){
@@ -402,7 +408,7 @@ function extractMain(text){
 }
 
 function acChart(people){
-  const ac=people.filter(p=>p.assign||p.filed).sort((a,b)=>(b.assign||0)-(a.assign||0));
+  const ac=people.filter(p=>p.assign||p.filed||keep(p.name)).sort((a,b)=>(b.assign||0)-(a.assign||0));
   return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다.</span></div></div>`;
 }
 /* ===== 이번 달 담당자별 배정·접수 현황 ===== */
@@ -423,8 +429,8 @@ function curMonthLabel(d){
 function curMonthChart(d){
   if(!d.cur)return "";
   const lab=curMonthLabel(d);
-  const rows=d.cur.filter(r=>!HIDE_NAMES.includes(r.name)&&(r.assign||r.filed)).sort((a,b)=>b.assign-a.assign);
-  if(!rows.length)return `<h2>${esc(lab)} 담당자별 배정·접수 현황</h2><div class="panel"><div class="msg">아직 ${esc(lab)}에 집계된 배정·접수 건이 없습니다.</div></div>`;
+  const rows=d.cur.filter(r=>!HIDE_NAMES.includes(r.name)&&(r.assign||r.filed||keep(r.name))).sort((a,b)=>b.assign-a.assign);
+  if(!rows.length||!rows.some(r=>r.assign||r.filed))return `<h2>${esc(lab)} 담당자별 배정·접수 현황</h2><div class="panel"><div class="msg">아직 ${esc(lab)}에 집계된 배정·접수 건이 없습니다.</div></div>`;
   const tA=sum(rows.map(r=>r.assign)),tF=sum(rows.map(r=>r.filed));
   return `<h2>${esc(lab)} 담당자별 배정·접수 현황</h2><div class="kpis">${kpi(lab+" 신규 배정",int(tA)+"건")}${kpi(lab+" 접수 완료",int(tF)+"건")}${kpi("접수 ÷ 배정",tA?(tF/tA*100).toFixed(0)+"%":"-")}</div>
   <div class="panel">${colChart(rows.map(r=>r.name),[{name:"신규 배정",vals:rows.map(r=>r.assign),color:"var(--acc)"},{name:"접수 완료",vals:rows.map(r=>r.filed),color:"var(--acc2)"}])}<div class="legend"><span>시트의 담당자별 신규 배정·접수 완료 표 기준이며, 배정이 많은 순서입니다. 달이 바뀌면 시트 값에 맞춰 월 이름도 바뀝니다.</span></div></div>`;
@@ -439,7 +445,7 @@ function fixHTML(d){
   let html="";
   // 5-1 월별 보정 수령
   if(f.monthly){
-    const rows=f.monthly.rows.filter(r=>vis(r.name)&&sum(r.v)>0),months=f.monthly.months;
+    const rows=f.monthly.rows.filter(r=>vis(r.name)&&(sum(r.v)>0||keep(r.name))),months=f.monthly.months;
     const tot=months.map((_,i)=>sum(rows.map(r=>r.v[i])));
     const lastI=tot.map((v,i)=>v>0?i:-1).filter(i=>i>=0).pop();
     if(lastI!==undefined&&rows.length){
@@ -453,12 +459,12 @@ function fixHTML(d){
       trs.push(`<tr class="tot"><td>합계</td>${idx.map(i=>`<td>${int(tot[i])}</td>`).join("")}<td>${int(T)}</td></tr>`);
       html+=`<h2>보정 수령 현황</h2><div class="kpis">${card("올해 보정 수령(누적)",int(T)+"건")}${avg!=null?card("월평균 수령",int(avg)+"건",esc(months[done[0]])+"~"+esc(months[done[done.length-1]])+" 완료된 달"):""}${card(months[lastI]+" 수령"+(inf?" (진행 중)":""),int(tot[lastI])+"건",idx.length>1?"전월 "+int(tot[lastI-1])+"건":"")}</div>
       <div class="panel">${colChart(labels,[{name:"보정 수령",vals:idx.map(i=>tot[i]),color:"var(--acc)"}])}<div class="legend"><span>송달일 기준 월별 보정 수령 건수의 담당자 합계입니다.${inf?" * 진행 중인 달은 아직 끝나지 않은 값입니다.":""}</span></div></div>
-      <div class="panel" style="margin-top:10px"><h3>담당자별 월별 보정 수령</h3><div class="tbl"><table><thead><tr><th>담당자</th>${idx.map(i=>`<th>${esc(months[i])}</th>`).join("")}<th>합계</th></tr></thead><tbody>${trs.join("")}</tbody></table></div><div class="legend"><span>색이 진할수록 해당 월 수령 건수가 많습니다. 배정이 시작되지 않은 담당자는 표시하지 않습니다.</span></div></div>`;
+      <div class="panel" style="margin-top:10px"><h3>담당자별 월별 보정 수령</h3><div class="tbl"><table><thead><tr><th>담당자</th>${idx.map(i=>`<th>${esc(months[i])}</th>`).join("")}<th>합계</th></tr></thead><tbody>${trs.join("")}</tbody></table></div><div class="legend"><span>색이 진할수록 해당 월 수령 건수가 많습니다. - 는 해당 월 수령이 없다는 뜻입니다.</span></div></div>`;
     }
   }
   // 5-2 보정 유형 비중
   if(f.types){
-    const rows=f.types.rows.filter(r=>vis(r.name)&&r.total>0).sort((a,b)=>b.total-a.total),types=f.types.types;
+    const rows=f.types.rows.filter(r=>vis(r.name)&&(r.total>0||keep(r.name))).sort((a,b)=>b.total-a.total),types=f.types.types;
     if(rows.length){
       const T=sum(rows.map(r=>r.total)),avg=types.map((_,k)=>sum(rows.map(r=>r.v[k]*r.total))/T);
       const stk=vals=>`<div class="stk">${vals.map((v,k)=>v>0?`<span style="width:${v.toFixed(2)}%;background:${FIX_COLORS[k%FIX_COLORS.length]}" title="${esc(types[k])} ${v.toFixed(1)}%">${v>=8?Math.round(v)+"%":""}</span>`:"").join("")}</div>`;
@@ -469,16 +475,18 @@ function fixHTML(d){
       <div class="legend" style="margin-top:4px"><span>전체는 담당자별 건수로 가중한 평균입니다. 좁은 구간은 마우스를 올리면 비율이 보입니다.</span></div></div>`;
     }
   }
-  // 5-3 미처리 잔여
+  // 5-3 보정 현황
   if(f.status){
-    const rows=f.status.rows.filter(r=>vis(r.name)&&r.total>0).sort((a,b)=>b.rest-a.rest);
+    const rows=f.status.rows.filter(r=>vis(r.name)&&(r.total>0||keep(r.name))).sort((a,b)=>b.rest-a.rest);
     if(rows.length){
-      const R=sum(rows.map(r=>r.rest)),U=sum(rows.map(r=>r.unread)),O=sum(rows.map(r=>r.open)),TT=sum(rows.map(r=>r.total)),DN=sum(rows.map(r=>r.done+r.quit));
+      const has=f.status.hasOver;
+      const R=sum(rows.map(r=>r.rest)),U=sum(rows.map(r=>r.unread)),O=sum(rows.map(r=>r.open)),TT=sum(rows.map(r=>r.total)),DN=sum(rows.map(r=>r.done+r.quit)),OV=has?sum(rows.map(r=>r.over||0)):null;
       const mx=Math.max(1,...rows.map(r=>r.rest));
-      html+=`<h2>보정 미처리 잔여 현황</h2><div class="kpis">${card("미처리 잔여",int(R)+"건")}${card("미열람",int(U)+"건")}${card("진행(시작)",int(O)+"건")}${card("처리율",TT?(DN/TT*100).toFixed(1)+"%":"-","종료·사임·폐지 ÷ 전체")}</div>
-      <div class="panel">${rows.map(r=>{const rate=r.total?((r.done+r.quit)/r.total*100).toFixed(1):"-";
-        return `<div class="frow wide"><span>${esc(r.name)}</span><div class="stk" style="width:${(r.rest/mx*100).toFixed(1)}%;min-width:${r.rest?24:0}px">${r.unread?`<span style="flex:${r.unread};background:var(--s-과중)" title="미열람 ${r.unread}건">${r.unread}</span>`:""}${r.open?`<span style="flex:${r.open};background:var(--acc)" title="진행(시작) ${r.open}건">${r.open}</span>`:""}</div><span class="n">미처리 ${r.rest}건 · 처리율 ${rate}%</span></div>`}).join("")}
-      <div class="legend"><span><i style="background:var(--s-과중)"></i>미열람</span><span><i style="background:var(--acc)"></i>진행(시작)</span><span>막대 길이는 미처리 잔여 건수(미열람 + 진행)이며, 많은 순서입니다. 처리율 = (종료 + 사임·폐지) ÷ 전체 건수입니다.</span></div></div>`;
+      html+=`<h2>보정 현황</h2><div class="kpis">${card("보정 건수",int(R)+"건","미열람 + 시작")}${card("미열람",int(U)+"건")}${card("시작",int(O)+"건")}${card("기한 초과",has?`<span class="${OV?"down":""}">${int(OV)}건</span>`:"-",has?"제출 기한이 지났는데 제출하지 않은 건":"통합_데이터 표에 '기한 초과' 열을 추가하면 표시됩니다")}${card("처리율",TT?(DN/TT*100).toFixed(1)+"%":"-","종료·사임·폐지 ÷ 전체")}</div>
+      <div class="panel">${rows.map(r=>{const rate=r.total?((r.done+r.quit)/r.total*100).toFixed(1)+"%":"-";
+        const over=has?` · <span class="${r.over?"down":""}">기한 초과 ${int(r.over||0)}건</span>`:"";
+        return `<div class="frow wide"><span>${esc(r.name)}</span><div class="stk" style="width:${(r.rest/mx*100).toFixed(1)}%;min-width:${r.rest?24:0}px">${r.unread?`<span style="flex:${r.unread};background:var(--s-과중)" title="미열람 ${r.unread}건">${r.unread}</span>`:""}${r.open?`<span style="flex:${r.open};background:var(--acc)" title="시작 ${r.open}건">${r.open}</span>`:""}</div><span class="n">보정 ${int(r.rest)}건${over} · 처리율 ${rate}</span></div>`}).join("")}
+      <div class="legend"><span><i style="background:var(--s-과중)"></i>미열람</span><span><i style="background:var(--acc)"></i>시작</span><span>막대 길이는 보정 건수(미열람 + 시작)이며, 많은 순서입니다. 처리율 = (종료 + 사임·폐지) ÷ 전체 건수입니다.${has?" 기한 초과 = 제출 기한이 지났는데 제출하지 않은 건이며, 연장 신청이 있으면 마지막 연장 제출 기한을 기준으로 합니다.":""}</span></div></div>`;
     }
   }
   return html;
@@ -644,9 +652,9 @@ function initTrend(h){
   const rows=h.rows.filter(r=>sum(idx.map(j=>r.v[j]))>0);
   // 담당자별 첫 배정이 있는 달(그 전에는 선을 그리지 않고, 팀 평균에도 넣지 않음)
   const start={};idx.forEach(j=>{const i=rows.findIndex(r=>r.v[j]>0);start[j]=i<0?Infinity:i});
-  const shown=idx.filter(j=>isFinite(start[j]));
+  const shown=idx.filter(j=>isFinite(start[j])||keep(h.names[j]));
   const totals=Object.fromEntries(shown.map(j=>[j,sum(rows.map(r=>r.v[j]))]));
-  const top3=[...shown].sort((a,b)=>totals[b]-totals[a]).slice(0,3);
+  const top3=[...shown].filter(j=>isFinite(start[j])).sort((a,b)=>totals[b]-totals[a]).slice(0,3);
   TREND={h,rows,idx,start,shown,sel:new Set(top3)};
   const box=document.getElementById("trend-chips");if(!box)return;
   box.innerHTML=shown.map(j=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(h.names[j])}</button>`).join("");
