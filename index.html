@@ -100,6 +100,11 @@ svg{width:100%;height:auto;display:block}
 .frow.wide{grid-template-columns:70px 1fr 300px}
 .frow .n{text-align:right;color:var(--sub);font-size:13px}
 @media(max-width:560px){.frow{grid-template-columns:56px 1fr 70px}.frow.wide{grid-template-columns:56px 1fr 170px}}
+.pnav{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 14px}
+.pnav .lbl{font-size:13px;color:var(--sub);margin-right:4px}
+.pnav a{display:inline-block;font-size:13px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+.pnav a:hover{border-color:var(--acc);color:var(--acc)}
+.pnav a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -108,6 +113,7 @@ svg{width:100%;height:auto;display:block}
     <div><h1>업무 현황 리포트</h1><div class="meta" id="meta">불러오는 중…</div></div>
     <button id="reload">새로고침</button>
   </header>
+  <nav class="pnav" id="pnav" aria-label="담당자별 리포트"></nav>
   <div id="app"></div>
 </div>
 <script>
@@ -777,6 +783,22 @@ async function get(url,snap){
   const c=readCache(),err=last&&last.name==="AbortError"?"시간 초과":(last&&last.message)||"알 수 없음";
   return c?{t:c.t,live:false,cached:true,at:c.at,err}:{t:snap,live:false,err};
 }
+/* ===== 담당자별 리포트로 가는 버튼 줄 ===== */
+const PERSON_PAGE="person.html";   // 담당자별 리포트 파일 이름
+function peopleList(W,M){
+  const set=new Set();
+  if(W)W.people.forEach(p=>set.add(p.name));
+  if(M&&M.heat)M.heat.names.forEach((n,j)=>{if(M.heat.rows.some(r=>r.v[j]>0)||keep(n))set.add(n)});
+  if(M&&M.fix&&M.fix.status)M.fix.status.rows.forEach(r=>{if(r.total>0||keep(r.name))set.add(r.name)});
+  SHOW_ALWAYS.forEach(n=>{if((W&&W.people.some(p=>p.name===n))||(M&&M.heat&&M.heat.names.includes(n)))set.add(n)});
+  return [...set].filter(n=>!HIDE_NAMES.includes(n)).sort((a,b)=>a.localeCompare(b,"ko"));
+}
+function drawNav(W,M){
+  const el=document.getElementById("pnav");if(!el)return;
+  const names=peopleList(W,M);
+  el.innerHTML=names.length?'<span class="lbl">담당자별 리포트</span>'+names.map(n=>`<a href="${PERSON_PAGE}#${encodeURIComponent(n)}">${esc(n)}</a>`).join(""):"";
+}
+
 function paint(){
   const app=document.getElementById("app"),meta=document.getElementById("meta");
   let html="",D=null,W=null,werr=null;
@@ -786,6 +808,7 @@ function paint(){
   try{html+=mainHTML2(D||extractMain(STATE.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
   if(D&&D.heat)initTrend(D.heat);
+  drawNav(W,D);
   const lab=PENDING
     ?(STATE.live?"갱신 중…":STATE.cached?"연결 중… (이 브라우저에서 마지막으로 불러온 데이터 "+fmtAt(STATE.at)+" 기준을 표시 중)":"연결 중… (저장본을 임시로 표시)")
     :STATE.live?"실시간 ("+fmtAt(STATE.at)+" 기준)"
