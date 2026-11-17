@@ -105,6 +105,15 @@ svg{width:100%;height:auto;display:block}
 .pnav a{display:inline-block;font-size:13px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
 .pnav a:hover{border-color:var(--acc);color:var(--acc)}
 .pnav a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.orow{display:grid;grid-template-columns:70px 1fr 1fr 84px;gap:14px;align-items:center;padding:5px 0;font-size:14px}
+.orow.ohead{font-size:13px;color:var(--sub);border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:4px}
+.orow.ohead small{font-weight:400}
+.ocell{display:grid;grid-template-columns:1fr 50px;gap:8px;align-items:center}
+.ocell .n,.orow>.n{text-align:right;color:var(--sub);font-size:13px}
+.ostk{display:flex;height:24px;border-radius:5px;overflow:hidden;min-width:0;background:transparent}
+.ostk span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;min-width:0;overflow:hidden}
+.legend b{font-weight:700;color:var(--ink);margin-right:2px}
+@media(max-width:700px){.orow{grid-template-columns:56px 1fr 1fr 60px;gap:8px}.ocell{grid-template-columns:1fr 40px}}
 </style>
 </head>
 <body>
@@ -271,6 +280,44 @@ const MAIN_SNAPSHOT = `월,월 접수 건수,월 수임 건수,총합,월 평균
 최제현,7,18,25,730,2,757,96.7%
 한예지,25,61,86,"1,336",17,"1,439",94.0%
 총합계,106,408,514,"11,981",109,"12,604",95.9%
+
+📌 [섹션 5-4] 담당자별 기한 초과 보정 구간별 현황 및 최장 지연일 분석,,,,,,,,📌 [섹션 5-5] 보정 유형별 기한 초과 현황 및 지연 분석,,,,
+담당자,D+1~D+3,D+4~D+7,D+8~D+14,D+15 이상,초과 합계,최장 초과일(일),,보정 유형,초과 건수,비중,D+1~D+14,D+15 이상,최장 지연일(일)
+곽정윤,2,0,2,0,4,14,,권고,30,27.5%,18,12,75
+김정석,0,0,0,1,1,21,,명령,8,7.3%,4,4,125
+노두환,0,1,0,0,1,5,,명변,39,35.8%,14,25,88
+류예지,0,1,3,3,7,69,,이의,29,26.6%,8,21,148
+박성희,0,0,1,3,4,125,,인지대,1,0.9%,1,0,6
+서소라,0,0,1,3,4,75,,예납,0,0.0%,0,0,0
+양은진,0,0,0,0,0,0,,주소,2,1.8%,0,2,252
+유수민,0,0,0,0,0,0,,결정,0,0.0%,0,0,0
+이준서,4,5,0,5,14,43,,총합계,109,100.0%,45,64,252
+이지은,0,0,0,0,0,0,,,,,,,
+전명일,0,0,0,0,0,0,,,,,,,
+주혜인,0,0,0,0,0,0,,,,,,,
+진혜진,0,0,0,0,0,0,,,,,,,
+최제현,1,2,0,0,3,5,,,,,,,
+한예지,0,0,0,1,1,27,,,,,,,
+총합계,7,9,7,16,39,125,,,,,,,
+
+📌 [섹션 5-6] 담당자별 기한 초과 보정 유형별 상세 현황 (출처: 보정 시트)
+담당자,권고,명령,명변,이의,인지대,예납,주소,결정,초과 합계
+곽정윤,3,1,0,3,0,0,0,0,7
+김정석,1,0,0,0,0,0,0,0,1
+노두환,1,0,14,9,0,0,0,0,24
+류예지,6,1,0,3,0,0,2,0,12
+박성희,3,1,3,1,0,0,0,0,8
+서소라,3,1,4,3,0,0,0,0,11
+양은진,0,0,0,0,0,0,0,0,0
+유수민,0,0,0,0,0,0,0,0,0
+이준서,9,4,7,1,1,0,0,0,22
+이지은,0,0,1,3,0,0,0,0,4
+전명일,0,0,0,0,0,0,0,0,0
+주혜인,0,0,0,1,0,0,0,0,1
+진혜진,0,0,0,0,0,0,0,0,0
+최제현,3,0,0,0,0,0,0,0,3
+한예지,1,0,10,5,0,0,0,0,16
+총합계,30,8,39,29,1,0,2,0,109
 `;
 
 const WORK_SNAPSHOT = `담당자별 업무 현황 및 실질 업무 부하 분석 (2026년),,,,,,,,,,,,,,,
@@ -352,9 +399,10 @@ function parseFixSections(A){
   const out={},isTot=n=>/^(총합계|전체)/.test(n);
   const sec=key=>{
     const i=A.findIndex(r=>r.some(v=>v.includes(key)));if(i<0)return null;
-    const c=A[i].findIndex(v=>v.includes(key)),head=(A[i+1]||[]).slice(c).map(x=>x.trim());
-    if(head[0]!=="담당자")return null;
-    const rows=[];for(let k=i+2;k<A.length&&(A[k][c]||"").trim();k++)rows.push(A[k].slice(c).map(x=>x.trim()));
+    const c=A[i].findIndex(v=>v.includes(key));let head=(A[i+1]||[]).slice(c).map(x=>x.trim());
+    if(head[0]!=="담당자"&&head[0]!=="보정 유형")return null;
+    const e=head.findIndex((h,k)=>k>0&&h==="");if(e>0)head=head.slice(0,e);     // 옆에 붙은 다른 표와 섞이지 않게 자름
+    const rows=[];for(let k=i+2;k<A.length&&(A[k][c]||"").trim();k++)rows.push(A[k].slice(c,c+head.length).map(x=>x.trim()));
     return {head,rows};
   };
   let sc=sec("[섹션 5-1]");
@@ -369,6 +417,21 @@ function parseFixSections(A){
     const g=(r,...ns)=>{const k=gi(...ns);return k<0?0:(num(r[k])||0)};
     const ko=sc.head.findIndex(h=>/기한\s*초과/.test(h));
     out.status={hasOver:ko>=0,rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],unread:g(r,"미열람"),open:g(r,"시작","진행(시작)"),rest:g(r,"보정 건수","미처리 잔여"),done:g(r,"종료(완료)","종료"),quit:g(r,"사임·폐지"),total:g(r,"전체 건수"),over:ko>=0?(num(r[ko])||0):null}))};
+  }
+  sc=sec("[섹션 5-4]");
+  if(sc){
+    const bands=["D+1~D+3","D+4~D+7","D+8~D+14","D+15 이상"],gi=n=>sc.head.indexOf(n),mi=sc.head.findIndex(h=>/최장/.test(h)),ti=sc.head.findIndex(h=>/합계/.test(h));
+    out.overBands={bands,rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],v:bands.map(b=>num(r[gi(b)])||0),total:num(r[ti])||0,max:mi>=0?(num(r[mi])||0):0}))};
+  }
+  sc=sec("[섹션 5-5]");
+  if(sc){
+    const gi=n=>sc.head.findIndex(h=>h.replace(/\s+/g,"")===n.replace(/\s+/g,"")),mi=sc.head.findIndex(h=>/최장/.test(h));
+    out.overTypes={rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({type:r[0],n:num(r[gi("초과 건수")])||0,share:num(r[gi("비중")])||0,short:num(r[gi("D+1~D+14")])||0,long:num(r[gi("D+15 이상")])||0,max:mi>=0?(num(r[mi])||0):0}))};
+  }
+  sc=sec("[섹션 5-6]");
+  if(sc){
+    const types=sc.head.filter(h=>h!=="담당자"&&!/합계/.test(h)),ti=sc.head.findIndex(h=>/합계/.test(h));
+    out.overByType={types,rows:sc.rows.filter(r=>!isTot(r[0])).map(r=>({name:r[0],v:types.map(t=>num(r[sc.head.indexOf(t)])||0),total:num(r[ti])||0}))};
   }
   return out;
 }
@@ -485,15 +548,62 @@ function fixHTML(d){
   if(f.status){
     const rows=f.status.rows.filter(r=>vis(r.name)&&(r.total>0||keep(r.name))).sort((a,b)=>b.rest-a.rest);
     if(rows.length){
-      const has=f.status.hasOver;
+      let has=f.status.hasOver;const ob=f.overBands,srcNote=!has&&ob?" (섹션 5-4 기준)":"";
+      if(!has&&ob){has=true;const om=Object.fromEntries(ob.rows.map(x=>[x.name,x.total]));rows.forEach(r=>{r.over=om[r.name]||0})}
       const R=sum(rows.map(r=>r.rest)),U=sum(rows.map(r=>r.unread)),O=sum(rows.map(r=>r.open)),TT=sum(rows.map(r=>r.total)),DN=sum(rows.map(r=>r.done+r.quit)),OV=has?sum(rows.map(r=>r.over||0)):null;
       const mx=Math.max(1,...rows.map(r=>r.rest));
-      html+=`<h2>보정 현황</h2><div class="kpis">${card("보정 건수",int(R)+"건","미열람 + 시작")}${card("미열람",int(U)+"건")}${card("시작",int(O)+"건")}${card("기한 초과",has?`<span class="${OV?"down":""}">${int(OV)}건</span>`:"-",has?"제출 기한이 지났는데 제출하지 않은 건":"통합_데이터 표에 '기한 초과' 열을 추가하면 표시됩니다")}${card("처리율",TT?(DN/TT*100).toFixed(1)+"%":"-","종료·사임·폐지 ÷ 전체")}</div>
+      html+=`<h2>보정 현황</h2><div class="kpis">${card("보정 건수",int(R)+"건","미열람 + 시작")}${card("미열람",int(U)+"건")}${card("시작",int(O)+"건")}${card("기한 초과",has?`<span class="${OV?"down":""}">${int(OV)}건</span>`:"-",has?(srcNote?"집계 유형: 권고·명령·인지대·예납 (섹션 5-4 기준)":"제출 기한이 지났는데 제출하지 않은 건"):"통합_데이터 표에 '기한 초과' 열을 추가하면 표시됩니다")}${card("처리율",TT?(DN/TT*100).toFixed(1)+"%":"-","종료·사임·폐지 ÷ 전체")}</div>
       <div class="panel">${rows.map(r=>{const rate=r.total?((r.done+r.quit)/r.total*100).toFixed(1)+"%":"-";
         const over=has?` · <span class="${r.over?"down":""}">기한 초과 ${int(r.over||0)}건</span>`:"";
         return `<div class="frow wide"><span>${esc(r.name)}</span><div class="stk" style="width:${(r.rest/mx*100).toFixed(1)}%;min-width:${r.rest?24:0}px">${r.unread?`<span style="flex:${r.unread};background:var(--s-과중)" title="미열람 ${r.unread}건">${r.unread}</span>`:""}${r.open?`<span style="flex:${r.open};background:var(--acc)" title="시작 ${r.open}건">${r.open}</span>`:""}</div><span class="n">보정 ${int(r.rest)}건${over} · 처리율 ${rate}</span></div>`}).join("")}
-      <div class="legend"><span><i style="background:var(--s-과중)"></i>미열람</span><span><i style="background:var(--acc)"></i>시작</span><span>막대 길이는 보정 건수(미열람 + 시작)이며, 많은 순서입니다. 처리율 = (종료 + 사임·폐지) ÷ 전체 건수입니다.${has?" 기한 초과 = 제출 기한이 지났는데 제출하지 않은 건이며, 연장 신청이 있으면 마지막 연장 제출 기한을 기준으로 합니다.":""}</span></div></div>`;
+      <div class="legend"><span><i style="background:var(--s-과중)"></i>미열람</span><span><i style="background:var(--acc)"></i>시작</span><span>막대 길이는 보정 건수(미열람 + 시작)이며, 많은 순서입니다. 처리율 = (종료 + 사임·폐지) ÷ 전체 건수입니다.${has?" 기한 초과 = 제출 기한이 지났는데 제출하지 않은 건이며, 연장 신청이 있으면 마지막 연장 제출 기한을 기준으로 합니다."+(srcNote?" 섹션 5-4 기준은 권고·명령·인지대·예납 유형 중 시작 상태인 건만 셉니다(미열람, 명변·이의·주소·결정·기타는 제외).":""):""}</span></div></div>`;
     }
+  }
+  return html;
+}
+
+/* ===== 기한 초과 보정 현황 (섹션 5-4 ~ 5-6) ===== */
+const BAND_COLORS=["#f0c75e","#e8923a","#d1533f","#7f1d2d"];
+const TYPE_ORDER=["권고","명변","명령","이의","인지대","예납","결정","주소","기타"];
+const typeColor=t=>{const k=TYPE_ORDER.indexOf(t);return k>=0?FIX_COLORS[k%FIX_COLORS.length]:"#8f98a5"};
+function overdueHTML(d){
+  const F=d.fix||{},A=F.overBands,B=F.overByType,T=F.overTypes;
+  if(!A&&!B&&!T)return "";
+  const vis=n=>!HIDE_NAMES.includes(n);
+  const card=(k,v,sub)=>`<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${v}</div>${sub?`<div class="cmpk">${sub}</div>`:""}</div>`;
+  let html=`<h2>기한 초과 보정 현황</h2>`;
+  const ar=A?A.rows.filter(r=>vis(r.name)):[],br=B?B.rows.filter(r=>vis(r.name)):[];
+  const ta=sum(ar.map(r=>r.total)),tb=sum(br.map(r=>r.total));
+  if(A){
+    const long=sum(ar.map(r=>r.v[3])),mx=ar.reduce((m,r)=>r.max>m.max?r:m,{max:0,name:""});
+    html+=`<div class="kpis">${card("기한 초과 (구간별)",`<span class="${ta?"down":""}">${int(ta)}건</span>`,"권고·명령·인지대·예납 (5-4)")}${card("D+15 이상 (장기 지연)",int(long)+"건",ta?(long/ta*100).toFixed(0)+"%":"")}${card("최장 초과일",int(mx.max)+"일",mx.max?esc(mx.name):"")}${B?card("기한 초과 (유형별)",int(tb)+"건","모든 유형 (5-5·5-6)"):""}</div>`;
+  }
+  // 5-4 + 5-6 한 화면: 담당자 한 줄에 '지연 구간' 막대와 '보정 유형' 막대를 나란히
+  if(A||B){
+    const names=[...new Set([...ar.map(r=>r.name),...br.map(r=>r.name)])].filter(n=>{
+      const a=ar.find(r=>r.name===n),b=br.find(r=>r.name===n);return (a&&a.total>0)||(b&&b.total>0)||keep(n)});
+    names.sort((x,y)=>{const f=n=>{const a=ar.find(r=>r.name===n),b=br.find(r=>r.name===n);return (a?a.total:0)*1000+(b?b.total:0)};return f(y)-f(x)});
+    const maxA=Math.max(1,...ar.map(r=>sum(r.v))),maxB=Math.max(1,...br.map(r=>sum(r.v)));
+    const types=B?B.types:[];
+    const stack=(vals,colors,labels,mx)=>{const t=sum(vals);if(!t)return '<div class="ostk"></div>';
+      return `<div class="ostk" style="width:${(t/mx*100).toFixed(1)}%">${vals.map((v,k)=>v>0?`<span style="flex:${v};background:${colors[k]}" title="${esc(labels[k])} ${v}건">${v/t>=0.2?v:""}</span>`:"").join("")}</div>`};
+    const rows=names.map(n=>{
+      const a=ar.find(r=>r.name===n),b=br.find(r=>r.name===n);
+      return `<div class="orow"><span>${esc(n)}</span>
+      <div class="ocell">${A?stack(a?a.v:[0,0,0,0],BAND_COLORS,A.bands,maxA):""}<span class="n"><b class="${a&&a.total?"down":""}">${a?int(a.total):0}건</b></span></div>
+      <div class="ocell">${B?stack(b?b.v:types.map(()=>0),types.map(typeColor),types,maxB):""}<span class="n"><b>${b?int(b.total):0}건</b></span></div>
+      <span class="n">${a&&a.max?int(a.max)+"일":"-"}</span></div>`}).join("");
+    const FOUR=["권고","명령","인지대","예납"],t4=B?sum(br.map(r=>sum(FOUR.map(t=>{const k=B.types.indexOf(t);return k>=0?r.v[k]:0})))):0;
+    const mism=A&&B?`<div class="legend" style="margin-top:6px"><span>${ta===t4?`지연 구간별(5-4)은 권고·명령·인지대·예납 유형 중 '시작' 상태이고 제출날짜가 없는 건만 센 값(${int(ta)}건)이라, 보정 유형별(5-6)의 같은 네 유형 합계와 일치합니다. 5-6의 전체 합계(${int(tb)}건)에는 명변·이의·주소·결정 등 다른 유형이 포함됩니다.`:`※ 지연 구간별(5-4) 합계 ${int(ta)}건은 권고·명령·인지대·예납 유형 기준이고, 보정 유형별(5-6)의 같은 네 유형 합계는 ${int(t4)}건으로 서로 다릅니다. 시트의 집계 기준을 확인해 주세요.`}</span></div>`:"";
+    html+=`<div class="panel"><div class="orow ohead"><span></span><span>지연 구간별 <small>(5-4 · 권고·명령·인지대·예납)</small></span><span>보정 유형별 <small>(5-6 · 전체 유형)</small></span><span class="n">최장 초과일</span></div>${rows}
+    <div class="legend"><b>지연 구간</b>${(A?A.bands:[]).map((t,k)=>`<span><i style="background:${BAND_COLORS[k]}"></i>${esc(t)}</span>`).join("")}</div>
+    <div class="legend" style="margin-top:4px"><b>보정 유형</b>${types.map(t=>`<span><i style="background:${typeColor(t)}"></i>${esc(t)}</span>`).join("")}</div>
+    <div class="legend" style="margin-top:6px"><span>막대 길이는 건수이고, 막대 안은 구성 비율입니다. 초과일은 제출 기한(연장이 있으면 마지막 연장 기한)부터 지난 날짜 수입니다.</span></div>${mism}</div>`;
+  }
+  // 5-5 보정 유형별
+  if(T){
+    const rows=T.rows.filter(r=>r.n>0).sort((a,b)=>b.n-a.n),mx=Math.max(1,...rows.map(r=>r.n)),tot=sum(rows.map(r=>r.n));
+    if(rows.length)html+=`<div class="panel" style="margin-top:10px"><h3>보정 유형별 기한 초과 <small>(섹션 5-5)</small></h3>${rows.map(r=>`<div class="frow wide"><span>${esc(r.type)}</span><div class="stk" style="width:${(r.n/mx*100).toFixed(1)}%;min-width:24px">${r.short?`<span style="flex:${r.short};background:${BAND_COLORS[1]}" title="D+1~D+14 ${r.short}건">${r.short}</span>`:""}${r.long?`<span style="flex:${r.long};background:${BAND_COLORS[3]}" title="D+15 이상 ${r.long}건">${r.long}</span>`:""}</div><span class="n">${int(r.n)}건 · ${tot?(r.n/tot*100).toFixed(1):r.share}% · 최장 ${int(r.max)}일</span></div>`).join("")}<div class="legend"><span><i style="background:${BAND_COLORS[1]}"></i>D+1~D+14</span><span><i style="background:${BAND_COLORS[3]}"></i>D+15 이상</span><span>건수가 많은 순서이며, 초과 건수가 없는 유형은 표시하지 않습니다.</span></div></div>`;
   }
   return html;
 }
@@ -620,6 +730,7 @@ function mainHTML2(d){
   if(d.heat){html+=`<h2>담당자별 월별 사건 배정 추이</h2><div class="panel"><div class="chips" id="trend-chips"></div><div id="trend-chart"></div></div>`}
   html+=curMonthChart(d);
   html+=fixHTML(d);
+  html+=overdueHTML(d);
   /* 상담자 */
   if(d.counsel){
     const tot=d.counsel.rows.find(r=>r[0]==="총계"),rows=d.counsel.rows.filter(r=>r[0]!=="총계");
