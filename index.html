@@ -5,15 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>업무 현황 리포트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--ink:#17212e;--sub:#657386;--line:#e1e6ed;--acc:#2456a6;--acc2:#2f9a7a;
 --up:#12805c;--down:#c43a31;--s-심각:#c43a31;--s-과중:#d98a14;--s-적정:#2f7d5b;--s-여유:#4b88b8;
 --h-심각:#c62828;--h-과중:#e07b1a;--h-적정:#1b7a3c;--h-여유:#2a6fdb;
 --f-심각:#b71c1c;--f-과중:#b25e0a;--f-적정:#17692f;--f-여유:#1f5fc4}
-@media (prefers-color-scheme:dark){:root{--bg:#0f141b;--card:#171e28;--ink:#e8edf3;--sub:#8f9cae;--line:#263040;--acc:#7fb0ff;--acc2:#4cc99a;
---up:#4cc99a;--down:#ff7b72;--s-심각:#ff7b72;--s-과중:#f0b04a;--s-적정:#4cc99a;--s-여유:#6cb4e6;
---f-심각:#ff8a80;--f-과중:#ffb74d;--f-적정:#6fdc9a;--f-여유:#7fb0ff}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;line-height:1.5}
 .wrap{max-width:1160px;margin:0 auto;padding:28px 16px 64px}
@@ -114,6 +111,71 @@ svg{width:100%;height:auto;display:block}
 .ostk span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;min-width:0;overflow:hidden}
 .legend b{font-weight:700;color:var(--ink);margin-right:2px}
 @media(max-width:700px){.orow{grid-template-columns:56px 1fr 1fr 60px;gap:8px}.ocell{grid-template-columns:1fr 40px}}
+
+/* ===== 에디토리얼(신문 지면) 테마 ===== */
+:root{--paper:#EEE9DF;--oat:#C9C1B1;--navy:#2C3B4D;--flame:#FFB162;--rust:#A35139;--abyss:#1B2632;
+--bg:#EEE9DF;--card:#EEE9DF;--ink:#1B2632;--sub:#4b5b6e;--line:#C9C1B1;--acc:#2C3B4D;--acc2:#A35139;--heat:#FFB162;
+--up:#2C3B4D;--down:#A35139;--s-심각:#A35139;--s-과중:#FFB162;--s-적정:#2C3B4D;--s-여유:#6b7a8c;
+--h-심각:#A35139;--h-과중:#FFB162;--h-적정:#2C3B4D;--h-여유:#6b7a8c;--f-심각:#8a3f2b;--f-과중:#8f5410;--f-적정:#2C3B4D;--f-여유:#4b5b6e}
+body{background:var(--paper);color:var(--ink)}
+.wrap{max-width:1240px;padding:28px 44px 72px}
+header{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;border-top:5px solid var(--rust);border-bottom:1px solid var(--abyss);padding:16px 0 12px;margin-bottom:0}
+header>button,header>div:last-child{position:absolute;right:0;top:14px}
+h1{font-family:"Noto Serif KR",serif;font-size:56px;font-weight:900;letter-spacing:-.03em;line-height:1.15;color:var(--abyss)}
+.meta{font-size:12px;letter-spacing:.02em;color:var(--sub);max-width:760px;margin-top:6px}
+h2{font-family:"Noto Serif KR",serif;font-size:23px;font-weight:900;margin:44px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--abyss)}
+h3{font-family:"Noto Serif KR",serif;font-size:16px;font-weight:700}
+button{border-radius:0;border:1px solid var(--abyss);background:var(--paper);color:var(--abyss)}
+button:hover{background:var(--abyss);color:var(--paper);border-color:var(--abyss)}
+.pnav{justify-content:center;gap:2px 14px;margin:0 0 6px;padding:9px 0;border-bottom:1px solid var(--abyss)}
+.pnav .lbl{font-size:12px;letter-spacing:.08em;color:var(--sub);margin-right:6px}
+.pnav a{border:0;background:none;border-radius:0;padding:2px 2px;text-decoration:underline;text-underline-offset:4px;color:var(--abyss)}
+.pnav a:hover{background:var(--abyss);color:var(--paper)}
+.kpis{gap:0;border-top:1px solid var(--abyss);border-bottom:1px solid var(--abyss);margin-bottom:16px}
+.kpi{background:none;border:0;border-right:1px solid var(--oat);border-radius:0;padding:12px 18px}
+.kpi:last-child{border-right:0}
+.kpi .k{font-size:12px;letter-spacing:.05em;color:var(--sub)}
+.kpi .v{font-family:"Noto Serif KR","Space Grotesk",serif;font-size:36px;font-weight:900;letter-spacing:-.02em;color:var(--abyss)}
+.cmpk{color:var(--sub)}
+.panel{background:none;border:0;border-top:1px solid var(--abyss);border-radius:0;padding:14px 0}
+.two{gap:0}.two>.panel{padding-right:22px}
+.track{background:#DDD6C7;border-radius:0;height:10px}.fill{border-radius:0}
+.ref{background:var(--abyss)}
+.legend{color:var(--sub)}.legend i{border-radius:0}
+.badge{border-radius:0;color:var(--ink);background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}
+table{font-size:13.5px}th{font-size:12px;letter-spacing:.04em;font-weight:700;color:var(--navy);border-bottom:1px solid var(--abyss)}
+td{border-bottom:1px solid var(--oat)}
+th:first-child,td:first-child{background:var(--paper)}
+tr.tot td{border-top:1px solid var(--abyss)}
+.chips .chip,.chip{border-radius:0;border:1px solid var(--abyss);background:var(--paper);color:var(--abyss)}
+.chip i{border-radius:0}
+.chip[aria-pressed=true]{background:var(--abyss);color:var(--paper);border-color:var(--abyss)}.chip[aria-pressed=true] i{background:var(--paper)}
+.chip[aria-pressed=false]{opacity:.85}
+.gg{border-radius:0;border:1px solid var(--abyss);background:var(--paper)}
+.g{background:var(--paper);border-right:1px solid var(--abyss)}
+.gh{border-radius:0;font-family:"Noto Serif KR",serif}
+.gc{font-family:"Noto Serif KR",serif;font-weight:900}
+.gt{background:var(--paper)}.gt th{background:#E3DDCF;color:var(--abyss)}
+.gt td:first-child{background:var(--paper)}
+.gs,.ga{background:var(--paper)}
+.gnote{background:#E6E0D2;border:1px solid var(--abyss);border-radius:0;color:var(--navy)}
+.sb{gap:0;border-top:1px solid var(--abyss);border-left:1px solid var(--abyss)}
+.sc{border-radius:0;border:0;border-right:1px solid var(--abyss);border-bottom:1px solid var(--abyss);box-shadow:none;padding:14px 16px;background:var(--paper)}
+.sc.top{box-shadow:inset 0 4px 0 var(--rust);border-color:var(--abyss)}
+.rk{border-radius:0;background:#DDD6C7;color:var(--abyss)}.sc.top .rk{background:var(--abyss);color:var(--paper)}
+.nm{font-family:"Noto Serif KR",serif}.big{font-family:"Noto Serif KR","Space Grotesk",serif;font-weight:900}
+.trk{border-radius:0;background:#DDD6C7}.fl{border-radius:0;background:var(--navy)}
+.tag{border-radius:0}
+.stk,.ostk{border-radius:0}.stk span,.ostk span{font-weight:700}
+.stat{border-radius:0}
+.durrow .n,.crow .n{color:var(--abyss)}
+.msg{color:var(--sub)}
+.gz{border-radius:0;border:0;border-top:2px solid var(--abyss);background:none;padding:14px 0}
+.gz .big{font-family:"Noto Serif KR",serif;font-weight:900}
+.pos{border-radius:0;border:0;border-top:1px solid var(--abyss);background:none;padding:10px 0}
+.mini i{border-radius:0;background:var(--oat)}.mini i.me{background:var(--rust)}
+.gauge{border-radius:0}
+svg text{font-family:"Noto Sans KR",sans-serif}
 </style>
 </head>
 <body>
@@ -374,7 +436,7 @@ const sum=a=>a.reduce((x,y)=>x+(y||0),0);
 const kpi=(k,v)=>`<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`;
 const sign=s=>/^\+|▲/.test(s)?"up":/^-\d|▼/.test(s)?"down":"flat";
 const bar=(label,val,max,right,color)=>`<div class="row" ${color?`style="--c:${color}"`:""}><span>${esc(label)}</span><div class="track"><div class="fill" style="width:${max?Math.min(100,val/max*100).toFixed(1):0}%"></div></div><span class="n">${right}</span></div>`;
-const heat=(v,max)=>v?`style="background:color-mix(in srgb,var(--acc) ${Math.round(v/max*55)}%,transparent)"`:"";
+const heat=(v,max)=>v?`style="background:color-mix(in srgb,var(--heat,var(--acc)) ${Math.round(v/max*55)}%,transparent)"`:"";
 const table=(head,rows,totalLast)=>`<div class="tbl"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
 
 function colChart(labels,series){
@@ -476,10 +538,15 @@ function extractMain(text){
   return out;
 }
 
-function acChart(people){
-  const have=new Set(people.map(p=>p.name)),extra=SHOW_ALWAYS.filter(n=>!have.has(n)).map(n=>({name:n,assign:0,filed:0}));
+function acChart(people,d){
+  const have=new Set(people.map(p=>p.name));
+  // 신규 담당자(SHOW_ALWAYS)는 업무 현황 표 값이 없거나 0이면 월별 배정표(누적)와 '이번 달' 표(접수 완료) 값으로 채움
+  const fb=n=>{const j=d&&d.heat?d.heat.names.indexOf(n):-1,c=d&&d.cur?d.cur.find(x=>x.name===n):null;
+    return {assign:Math.max(j>=0?sum(d.heat.rows.map(r=>r.v[j])):0,c?c.assign:0),filed:c?c.filed:0}};
+  people=people.map(p=>keep(p.name)?{...p,assign:Math.max(p.assign||0,fb(p.name).assign),filed:Math.max(p.filed||0,fb(p.name).filed)}:p);
+  const extra=SHOW_ALWAYS.filter(n=>!have.has(n)).map(n=>({name:n,...fb(n)}));
   const ac=[...people,...extra].filter(p=>p.assign||p.filed||keep(p.name)).sort((a,b)=>(b.assign||0)-(a.assign||0));
-  return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다. 아직 배정이 없는 담당자는 0건으로 표시됩니다.</span></div></div>`;
+  return `<h2>담당자별 배정/접수 건수</h2><div class="panel">${colChart(ac.map(p=>p.name),[{name:"배정",vals:ac.map(p=>p.assign||0),color:"var(--acc)"},{name:"접수",vals:ac.map(p=>p.filed||0),color:"var(--acc2)"}])}<div class="legend"><span>2026년 누적 기준이며, 배정 건수가 많은 순서입니다. 아직 배정이 없는 담당자는 0건으로 표시되며, 업무 현황 표에 값이 없거나 0인 신규 담당자는 월별 배정표와 이번 달 표의 값을 사용합니다.</span></div></div>`;
 }
 /* ===== 이번 달 담당자별 배정·접수 현황 ===== */
 // 시트의 '신규 배정' 표가 어느 달 값인지, 월별 배정표와 대조해서 찾습니다(달이 바뀌어도 시트 값에 맞춰 자동으로 바뀜).
@@ -507,7 +574,7 @@ function curMonthChart(d){
 }
 
 /* ===== 보정 현황 (섹션 5-1 ~ 5-3) ===== */
-const FIX_COLORS=["#2456a6","#2f9a7a","#d9a21b","#c43a31","#8a4fd0","#6c8ebf","#8f98a5","#d9786f","#b8860b"];
+const FIX_COLORS=["#2C3B4D","#A35139","#FFB162","#5b6f86","#D9803F","#8d9fb3","#8f8671","#7a3524","#C9A15A"];
 function fixHTML(d){
   const f=d.fix;if(!f||(!f.monthly&&!f.types&&!f.status))return "";
   const vis=n=>!HIDE_NAMES.includes(n);
@@ -564,7 +631,7 @@ function fixHTML(d){
 }
 
 /* ===== 기한 초과 보정 현황 (섹션 5-4 ~ 5-6) ===== */
-const BAND_COLORS=["#f0c75e","#e8923a","#d1533f","#7f1d2d"];
+const BAND_COLORS=["#FFB162","#D9803F","#A35139","#5a2a1d"];
 const TYPE_ORDER=["권고","명변","명령","이의","인지대","예납","결정","주소","기타"];
 const typeColor=t=>{const k=TYPE_ORDER.indexOf(t);return k>=0?FIX_COLORS[k%FIX_COLORS.length]:"#8f98a5"};
 function overdueHTML(d){
@@ -643,7 +710,7 @@ function natCompare(d){
   const mx=Math.max(0.01,...rows.map(r=>r.sh)),mk=Math.max(1,...rows.map(r=>r.kj));
   return `<h2>전국 법원 통계와 kj 비교 <small class="flat" style="font-weight:400;font-size:13px">· ${range}</small></h2>
   <div class="kpis">${kpi("전국 접수 ("+range+")",int(NT)+"건")}${kpi("kj 접수 (같은 기간)",int(KT)+"건")}${kpi("kj 전국 점유율",NT?(KT/NT*100).toFixed(2)+"%":"-")}${rows[0]?kpi("점유율 최고 법원",esc(rows[0].name)+" "+rows[0].sh.toFixed(2)+"%"):""}</div>
-  <div class="panel"><h3>월별 전국 접수와 kj 접수</h3>${natChart(labels,natV,kjV,share)}<div class="legend"><span><i style="background:var(--acc);opacity:.5"></i>전국 접수 건수(왼쪽 축)</span><span><i style="background:var(--acc2)"></i>kj 접수 건수(오른쪽 축)</span><span>월 아래 초록 숫자: kj 점유율(kj ÷ 전국)</span></div></div>
+  <div class="panel"><h3>월별 전국 접수와 kj 접수</h3>${natChart(labels,natV,kjV,share)}<div class="legend"><span><i style="background:var(--acc);opacity:.5"></i>전국 접수 건수(왼쪽 축)</span><span><i style="background:var(--acc2)"></i>kj 접수 건수(오른쪽 축)</span><span>월 아래 붉은 숫자: kj 점유율(kj ÷ 전국)</span></div></div>
   <div class="panel" style="margin-top:10px"><h3>법원별 kj 점유율과 접수 건수</h3>${rows.map(r=>`<div class="crow"><span>${esc(r.name)}</span><div><div class="track"><div class="fill" style="width:${(r.sh/mx*100).toFixed(1)}%;background:var(--acc2)"></div></div><div class="track" style="margin-top:3px"><div class="fill" style="width:${(r.kj/mk*100).toFixed(1)}%;background:var(--acc)"></div></div></div><span class="n">${r.sh.toFixed(2)}% · kj ${int(r.kj)} / 전국 ${int(r.nat)}</span></div>`).join("")}<div class="legend"><span><i style="background:var(--acc2)"></i>kj 점유율(위)</span><span><i style="background:var(--acc)"></i>kj 접수 건수(아래)</span><span>전국 통계가 있는 달(${range})만 비교했으며, 접수가 적은 법원은 점유율이 한두 건에 크게 달라질 수 있습니다.</span></div></div>`;
 }
 
@@ -713,7 +780,7 @@ function monthlyHTML(M){
   const dmax=Math.max(1,...dur.map(x=>x[1]));
   const durHTML=dur.length?`<div class="panel" style="margin-top:10px"><h3>소요기간 한눈에 보기</h3>${dur.map(([k,v])=>`<div class="durrow"><span>${esc(k)}</span><div class="track"><div class="fill" style="width:${(v/dmax*100).toFixed(1)}%;background:var(--acc)"></div></div><span class="n">${int(v)}일</span></div>`).join("")}<div class="legend"><span>${fixN?"평균 보정 횟수 "+esc(fixN[1])+"회 · ":""}각 항목은 시트에 정의된 별도 평균 기간이며, 서로 더한 값이 아닙니다.</span></div></div>`:"";
   return `<h2>월별 실적 추이</h2><div class="kpis">${cards}</div>
-  <div class="panel">${monthChart(m,inf,avgF,avgS)}<div class="legend"><span><i style="background:var(--acc)"></i>접수</span><span><i style="background:var(--acc2)"></i>수임</span><span>점선: 완료된 달 평균</span><span>월 아래 숫자: 전월 대비 증감 (위 파랑=접수, 아래 초록=수임)${inf?" · 진행 중인 달은 달이 끝나기 전 값이라 흐리게 표시":""}</span>${inf?`<span>* ${esc(m[m.length-1].l)}은 진행 중이라 연하게 표시하고, 점선 막대는 경과일(${inf.elapsed}/${inf.dim}일) 기준 환산 예상치입니다.</span>`:""}</div></div>${durHTML}`;
+  <div class="panel">${monthChart(m,inf,avgF,avgS)}<div class="legend"><span><i style="background:var(--acc)"></i>접수</span><span><i style="background:var(--acc2)"></i>수임</span><span>점선: 완료된 달 평균</span><span>월 아래 숫자: 전월 대비 증감 (위=접수, 아래=수임)${inf?" · 진행 중인 달은 달이 끝나기 전 값이라 흐리게 표시":""}</span>${inf?`<span>* ${esc(m[m.length-1].l)}은 진행 중이라 연하게 표시하고, 점선 막대는 경과일(${inf.elapsed}/${inf.dim}일) 기준 환산 예상치입니다.</span>`:""}</div></div>${durHTML}`;
 }
 
 function mainHTML(d,work){
@@ -721,7 +788,7 @@ function mainHTML(d,work){
   /* 1. 월별 실적 */
   if(d.monthly){
     html+=monthlyHTML(d.monthly);
-    if(work&&work.people.length)html+=acChart(work.people);
+    if(work&&work.people.length)html+=acChart(work.people,d);
   }
   return html;
 }
@@ -747,7 +814,7 @@ function mainHTML2(d){
 }
 
 /* ===== 담당자별 월별 배정 추이 (선 그래프) ===== */
-const PALETTE=["#2456a6","#d9531e","#2f9a7a","#8a4fd0","#c9a100","#d03f7a","#4a90c4","#7a8a00","#a0522d","#008b8b","#6b6bd1","#d2691e","#5f7f5f","#b8860b","#c0392b","#3f8f3f","#7d3c98"];
+const PALETTE=["#2C3B4D","#A35139","#D9803F","#5b6f86","#7a3524","#8f8671","#1B2632","#B8934A","#8d9fb3","#6d4c41","#3f5a73","#C0703A","#4f6b5a","#9c6b6b","#7d7566"];
 let TREND=null;
 function lineChart(labels,series){
   const W=900,H=280,L=40,R=14,T=12,B=30;
@@ -828,7 +895,7 @@ function extractWork(text){
     const r=all[i].slice(start),name=r[0];if(!name)break;
     if(afterTotal&&!SHOW_ALWAYS.includes(name))break;      // 합계 아래에는 새로 추가한 담당자 행만 읽음
     const g=n=>r[col(n)];
-    const rec={name,assign:num(g("배정 건수")),filed:num(g("접수 건수")),fileRate:num(g("접수율")),fix:num(g("보정 건수")),open:num(g("개시율")),days:num(g("평균 소요기간")),backlog:num(g("미접수 적체(2개월)")),active:num(g("진행 사건 수")),urgent:num(g("긴급 보정(3일이하)")),load:num(g("종합 체감 부하(%)")),status:g("실질 업무 상태")||""};
+    const rec={name,assign:num(g("배정 건수")),filed:num(g("접수 건수")),fileRate:num(g("접수율")),fix:num(g("보정 건수")),open:num(g("개시율")),days:num(g("평균 소요기간")),backlog:num(g("미접수 적체(2개월)")),active:num(g("진행 사건 수")),urgent:num(g("긴급 보정(3일이하)")),load:num(g("종합 체감 부하(%)")),status:(()=>{const v=String(g("실질 업무 상태")||""||"").replace(/[^가-힣]/g,"");const L=num(g("종합 체감 부하(%)"));return STATUS.includes(v)?v:(L==null?"여유":L>=130?"심각":L>=110?"과중":L>=80?"적정":"여유")})()};
     if(name.startsWith("합계")){total=rec;afterTotal=true;continue}
     people.push(rec);
   }
@@ -912,6 +979,13 @@ function drawNav(W,M){
   el.innerHTML=names.length?'<span class="lbl">담당자별 리포트</span>'+names.map(n=>`<a href="${PERSON_PAGE}#${encodeURIComponent(n)}">${esc(n)}</a>`).join(""):"";
 }
 
+function inkFix(){   // 배경색이 밝으면 어두운 글자, 어두우면 밝은 글자로 자동 선택
+  document.querySelectorAll(".stk span,.ostk span,.gh,.stat").forEach(el=>{
+    const m=getComputedStyle(el).backgroundColor.match(/[\d.]+/g);if(!m||(m.length>3&&+m[3]===0))return;
+    const L=(0.299*+m[0]+0.587*+m[1]+0.114*+m[2])/255;
+    el.style.color=L>0.5?"#1B2632":"#EEE9DF";
+  });
+}
 function paint(){
   const app=document.getElementById("app"),meta=document.getElementById("meta");
   let html="",D=null,W=null,werr=null;
@@ -921,7 +995,7 @@ function paint(){
   try{html+=mainHTML2(D||extractMain(STATE.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
   if(D&&D.heat)initTrend(D.heat);
-  drawNav(W,D);
+  drawNav(W,D);inkFix();
   const lab=PENDING
     ?(STATE.live?"갱신 중…":STATE.cached?"연결 중… (이 브라우저에서 마지막으로 불러온 데이터 "+fmtAt(STATE.at)+" 기준을 표시 중)":"연결 중… (저장본을 임시로 표시)")
     :STATE.live?"실시간 ("+fmtAt(STATE.at)+" 기준)"
