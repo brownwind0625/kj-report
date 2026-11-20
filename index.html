@@ -509,8 +509,8 @@ function extractMain(text){
     out.monthly={m,open:(A[h+1]||[])[5],kv:A.filter(r=>kvKeys.includes(r[0])).map(r=>[r[0],r[1]])};
   }
   h=F(r=>r[0]==="구분"&&r[1]==="한예지");
-  if(h>=0){const names=A[h].slice(1).filter(Boolean);
-    out.heat={names,rows:until(h+1,r=>/월$/.test(r[0])).map(r=>({l:r[0],v:names.map((_,j)=>num(r[j+1])||0)}))}}
+  if(h>=0){const cols=[];A[h].forEach((v,j)=>{if(j>0&&v)cols.push([v,j])});const names=cols.map(c=>c[0]);
+    out.heat={names,rows:until(h+1,r=>/월$/.test(r[0])).map(r=>({l:r[0],v:cols.map(c=>num(r[c[1]])||0)}))}}
   h=F(r=>r[0]==="담당자"&&r[1]==="25년 전체");
   if(h>=0){const rows=[];for(let i=h+1;i<A.length&&A[i][0];i++){rows.push(A[i].slice(0,14));if(A[i][0].startsWith("합계"))break}
     out.growth={head:A[h].slice(0,14),rows}}
@@ -832,7 +832,7 @@ function lineChart(labels,series){
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="담당자별 월별 배정 추이">${g}</svg><div class="legend">${series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`;
 }
 const TREND_HIDE=HIDE_NAMES;
-function initTrend(h){
+function initTrend(h,others){
   const idx=h.names.map((n,j)=>j).filter(j=>!TREND_HIDE.includes(h.names[j]));
   const rows=h.rows.filter(r=>sum(idx.map(j=>r.v[j]))>0);
   // 담당자별 첫 배정이 있는 달(그 전에는 선을 그리지 않고, 팀 평균에도 넣지 않음)
@@ -840,7 +840,11 @@ function initTrend(h){
   const shown=idx.filter(j=>isFinite(start[j])||keep(h.names[j]));
   const totals=Object.fromEntries(shown.map(j=>[j,sum(rows.map(r=>r.v[j]))]));
   const top3=[...shown].filter(j=>isFinite(start[j])).sort((a,b)=>totals[b]-totals[a]).slice(0,3);
-  TREND={h,rows,idx,start,shown,sel:new Set(top3)};
+  // 업무 현황 표에는 있는데 이 그래프에 없는 담당자는 이유를 화면에 안내
+  const noCol=[],allZero=[];
+  (others||[]).forEach(n=>{if(TREND_HIDE.includes(n)||shown.some(j=>h.names[j]===n))return;
+    if(!h.names.includes(n))noCol.push(n);else allZero.push(n)});
+  TREND={h,rows,idx,start,shown,sel:new Set(top3),noCol,allZero};
   const box=document.getElementById("trend-chips");if(!box)return;
   box.innerHTML=shown.map(j=>`<button class="chip" data-j="${j}" style="--c:${PALETTE[j%PALETTE.length]}" aria-pressed="${TREND.sel.has(j)}"><i></i>${esc(h.names[j])}</button>`).join("");
   box.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;TREND.sel.has(j)?TREND.sel.delete(j):TREND.sel.add(j);b.setAttribute("aria-pressed",TREND.sel.has(j));drawTrend()});
@@ -851,7 +855,7 @@ function drawTrend(){
   const avg=rows.map((r,i)=>{const act=idx.filter(j=>start[j]<=i);return act.length?+(sum(act.map(j=>r.v[j]))/act.length).toFixed(1):0});
   const series=[...sel].sort((a,b)=>a-b).map(j=>({name:h.names[j],vals:rows.map((r,i)=>i<start[j]?null:r.v[j]),color:PALETTE[j%PALETTE.length]}));
   series.push({name:"담당자 평균",vals:avg,color:"var(--sub)",dash:true});
-  el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다. 팀 평균은 해당 월까지 배정을 시작한 담당자만으로 계산합니다.</span></div>';
+  el.innerHTML=lineChart(rows.map(r=>r.l),series)+'<div class="legend"><span>위의 이름을 눌러 비교할 담당자를 고르세요. 기본값은 배정이 많은 상위 3명입니다. 팀 평균은 해당 월까지 배정을 시작한 담당자만으로 계산합니다.'+(TREND.noCol.length?' 월별 배정표에 열이 없어 표시하지 못한 담당자: '+TREND.noCol.map(esc).join(', ')+'.':'')+(TREND.allZero.length?' 월별 배정이 모두 0건이라 선이 없는 담당자: '+TREND.allZero.map(esc).join(', ')+'.':'')+'</span></div>';
 }
 
 /* ===== 법원별 접수·소요기간 스코어보드 ===== */
@@ -994,7 +998,7 @@ function paint(){
   try{if(werr)throw werr;html+=workHTML(W,STATE.live?"":(STATE.cached?"마지막 데이터("+fmtAt(STATE.at)+" 기준)":"저장본("+SNAP_DATE+" 기준)"))}catch(e){html+='<div class="msg">업무 부하를 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   try{html+=mainHTML2(D||extractMain(STATE.t))}catch(e){html+='<div class="msg">상세 현황을 표시하지 못했습니다: '+esc(e.message)+'</div>'}
   app.innerHTML=html;
-  if(D&&D.heat)initTrend(D.heat);
+  if(D&&D.heat)initTrend(D.heat,W?W.people.map(p=>p.name):[]);
   drawNav(W,D);inkFix();
   const lab=PENDING
     ?(STATE.live?"갱신 중…":STATE.cached?"연결 중… (이 브라우저에서 마지막으로 불러온 데이터 "+fmtAt(STATE.at)+" 기준을 표시 중)":"연결 중… (저장본을 임시로 표시)")
