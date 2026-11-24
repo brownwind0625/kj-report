@@ -208,6 +208,10 @@ svg text{font-family:"Noto Sans KR",sans-serif}
 .ct td.m{white-space:normal;min-width:200px;max-width:300px}
 .ct td.r{color:var(--rust);font-weight:700}
 .pill{display:inline-block;padding:1px 9px;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 26%,transparent);font-size:12px;font-weight:500}
+#who{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 14px;margin:0 0 6px;padding:9px 0;border-bottom:1px solid var(--abyss)}
+#who .lbl{font-size:12px;letter-spacing:.08em;color:var(--sub);margin-right:6px}
+#who .chip{border:0;background:none;border-radius:0;padding:2px 4px;font-size:13px;color:var(--abyss);text-decoration:underline;text-underline-offset:4px}
+#who .chip:hover,#who .chip[aria-pressed=true]{background:var(--abyss);color:var(--paper);text-decoration:none}
 </style>
 </head>
 <body>
@@ -986,7 +990,7 @@ function paint(){
     const W=extractWork(STATE.t),M=extractMain(STATE.t),names=peopleList(W,M);
     if(!names.length)throw new Error("담당자를 찾지 못했습니다");
     if(!CURNAME||!names.includes(CURNAME))CURNAME=pickName(names);
-    who.innerHTML=names.map(n=>`<button class="chip" data-n="${esc(n)}" aria-pressed="${n===CURNAME}">${esc(n)}</button>`).join("");
+    who.innerHTML='<span class="lbl">담당자별 리포트</span>'+names.map(n=>`<button class="chip" data-n="${esc(n)}" aria-pressed="${n===CURNAME}">${esc(n)}</button>`).join("");
     who.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
       CURNAME=b.dataset.n;
       try{localStorage.setItem("person-last",CURNAME)}catch(e){}
