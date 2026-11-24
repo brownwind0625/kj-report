@@ -833,6 +833,7 @@ function inkFix(){   // 배경색이 밝으면 어두운 글자, 어두우면 �
 // 그래도 시트 전체를 웹에 게시하면 링크를 아는 누구나 그 열을 볼 수 있으니, 자동 연결을 쓰려면 개인정보 열을 뺀 별도 탭만 게시하고
 // 그 CSV 링크를 아래에 넣으세요. 비워 두면 'CSV 파일 열기'(내 컴퓨터에서만 읽음)로 사용합니다.
 /* ===== 보정 사건 목록 (원본 '보정' 시트) ===== */
+/* ===== 보정 사건 목록 (원본 '보정' 시트) ===== */
 const FIX_CSV_URL="";
 let CASES=null,CASE_SRC="",CASE_ERR="",CASE_FILTER="open",CASE_BUSY=false,CASE_MANUAL=false,CASE_TXT=null;
 const D1=864e5;
@@ -852,7 +853,6 @@ function parseDeadline(v){
 
 function parseCases(text){
   const A=parseCSV(text),norm=x=>String(x||"").replace(/\s+/g,"");
-  // '진행상황', '담당자', '보정유형'이 포함된 헤더 행 탐색
   const hi=A.findIndex(r=>{
     const n=r.map(norm);
     return n.includes("진행상황")&&n.includes("담당자")&&n.includes("보정유형");
@@ -862,12 +862,13 @@ function parseCases(text){
   const h=A[hi].map(norm);
   const ix=(...names)=>{for(const nm of names){const i=h.indexOf(nm);if(i>=0)return i}return -1};
   const g=(r,...names)=>{const i=ix(...names);return i<0?"":(r[i]||"").trim()};
-  const t=today0();
+  const t=today0(),tMs=t.getTime();
 
   return A.slice(hi+1).filter(r=>g(r,"code","코드")&&g(r,"담당자")).map(r=>{
     const finalStr=g(r,"최종제출기한","제출기한");
     const eff=parseDeadline(finalStr);
     const sub=g(r,"제출날짜");
+    const isToday=!!(eff&&eff.getTime()===tMs&&!sub);
     return {
       status:g(r,"진행상황"),
       owner:g(r,"담당자"),
@@ -876,8 +877,9 @@ function parseCases(text){
       type:g(r,"보정유형"),
       finalStr,
       eff,
-      over:!!(eff&&eff<t&&!sub),
-      soon:!!(eff&&eff>=t&&eff-t<=3*D1&&!sub)
+      isToday,
+      over:!!(eff&&eff.getTime()<tMs&&!sub),
+      soon:!!(eff&&eff.getTime()>tMs&&eff.getTime()-tMs<=3*D1&&!sub)
     };
   });
 }
@@ -916,8 +918,14 @@ function drawCases(){
     if(!CASE_ERR)h+=`<div class="panel"><div class="msg">보정 사건 데이터를 불러오지 못했습니다. 상단의 새로고침을 눌러주세요.</div></div>`;
   }else{
     const mine=CASES.filter(c=>c.owner===name),act=mine.filter(c=>!/^(종료|사임|폐지)/.test(c.status));
-    // 최종제출기한 빠른 순 정렬 (기한이 빈칸인 '결정' 등은 맨 아래로)
-    const list=(CASE_FILTER==="open"||!hasClosed?act:mine).slice().sort((a,b)=>(a.eff?a.eff.getTime():9e15)-(b.eff?b.eff.getTime():9e15));
+    // 1순위: 진행상황 '시작' + 보정유형 '결정' 최상단 배치
+    // 2순위: 최종제출기한 빠른 순 정렬
+    const isTop=c=>c.status==="시작"&&c.type==="결정";
+    const list=(CASE_FILTER==="open"||!hasClosed?act:mine).slice().sort((a,b)=>{
+      const ta=isTop(a)?0:1,tb=isTop(b)?0:1;
+      if(ta!==tb)return ta-tb;
+      return (a.eff?a.eff.getTime():9e15)-(b.eff?b.eff.getTime():9e15);
+    });
     const nS=act.filter(c=>c.status==="시작").length,nU=act.filter(c=>c.status==="미열람").length,nO=act.filter(c=>c.over).length;
     
     h+=`<div class="kpis">
@@ -933,17 +941,19 @@ function drawCases(){
     else{
       const H=["진행상황","담당자","코드","성명","보정유형","최종제출기한"];
       const rows=list.map(c=>{
-        const dc=(c.over||c.soon)?"r":"";
+        const dc=(c.isToday||c.over||c.soon)?"r":"";
+        const todayStyle=c.isToday?' style="color:#d32f2f;font-weight:700"':"";
+        const tag=c.over?" ·초과":c.isToday?" ·오늘":"";
         return `<tr>
           <td>${pill(c.status)}</td>
           <td>${esc(c.owner)}</td>
           <td>${esc(c.code)}</td>
           <td>${esc(c.client)}</td>
           <td>${esc(c.type)}</td>
-          <td class="${dc}">${esc(c.finalStr)}${c.over?" ·초과":""}</td>
+          <td class="${dc}"${todayStyle}>${esc(c.finalStr)}${tag}</td>
         </tr>`;
       }).join("");
-      h+=`<div class="panel"><div class="tbl"><table class="ct"><thead><tr>${H.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div><div class="legend"><span>최종 제출기한이 빠른 순으로 정렬됩니다. 붉은 글씨는 기한이 지났거나 3일 이내 임박한 건입니다.</span></div></div>`;
+      h+=`<div class="panel"><div class="tbl"><table class="ct"><thead><tr>${H.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div><div class="legend"><span>진행상황이 '시작'인 '결정' 건이 최상단에 표시되며, 이후 최종 제출기한이 빠른 순으로 정렬됩니다. <b style="color:#d32f2f">빨간색</b>은 오늘 마감, 붉은 글씨는 기한 초과 및 3일 이내 임박 건입니다.</span></div></div>`;
     }
   }
   box.innerHTML=h;
