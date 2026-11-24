@@ -832,39 +832,80 @@ function inkFix(){   // 배경색이 밝으면 어두운 글자, 어두우면 �
 // 원본 '보정' 시트에는 의뢰인 성명·사건번호·비고가 들어 있습니다. 이 페이지는 그 세 열을 읽지도, 표시하지도 않습니다.
 // 그래도 시트 전체를 웹에 게시하면 링크를 아는 누구나 그 열을 볼 수 있으니, 자동 연결을 쓰려면 개인정보 열을 뺀 별도 탭만 게시하고
 // 그 CSV 링크를 아래에 넣으세요. 비워 두면 'CSV 파일 열기'(내 컴퓨터에서만 읽음)로 사용합니다.
+/* ===== 보정 사건 목록 (원본 '보정' 시트) ===== */
 const FIX_CSV_URL="";
 let CASES=null,CASE_SRC="",CASE_ERR="",CASE_FILTER="open",CASE_BUSY=false,CASE_MANUAL=false,CASE_TXT=null;
 const D1=864e5;
-const pMD=v=>{const m=/(\d{1,2})\.\s*(\d{1,2})\./.exec(v||"");return m?[+m[1],+m[2]]:null};
 const today0=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
-function servedDate(v){const a=pMD(v);if(!a)return null;const t=today0();let d=new Date(t.getFullYear(),a[0]-1,a[1]);if(d-t>7*D1)d=new Date(t.getFullYear()-1,a[0]-1,a[1]);return d}
-function relD(base,v){const a=pMD(v);if(!a||!base)return null;let d=new Date(base.getFullYear(),a[0]-1,a[1]);if(d<base-60*D1)d=new Date(base.getFullYear()+1,a[0]-1,a[1]);return d}
+
+// YYYY-MM-DD, YYYY. M. D, M. D 형식 모두 정확히 Date 객체로 변환
+function parseDeadline(v){
+  const s=String(v||"").trim();
+  if(!s)return null;
+  let m=/(\d{4})[.\-\/]\s*(\d{1,2})[.\-\/]\s*(\d{1,2})/.exec(s);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  m=/(\d{1,2})[.\-\/]\s*(\d{1,2})/.exec(s);
+  if(!m)return null;
+  const t=today0();
+  return new Date(t.getFullYear(),+m[1]-1,+m[2]);
+}
+
 function parseCases(text){
   const A=parseCSV(text),norm=x=>String(x||"").replace(/\s+/g,"");
-  const hi=A.findIndex(r=>{const n=r.map(norm);return n.includes("송달일")&&n.includes("보정유형")&&n.includes("담당자")});
-  if(hi<0)throw new Error("보정 시트의 머리글(담당자, 송달일, 보정 유형)을 찾지 못했습니다");
-  const h=A[hi].map(norm),ix=n=>h.indexOf(n),g=(r,n)=>{const i=ix(n);return i<0?"":(r[i]||"").trim()};
+  // '진행상황', '담당자', '보정유형'이 포함된 헤더 행 탐색
+  const hi=A.findIndex(r=>{
+    const n=r.map(norm);
+    return n.includes("진행상황")&&n.includes("담당자")&&n.includes("보정유형");
+  });
+  if(hi<0)throw new Error("보정 시트의 머리글(진행상황, 담당자, 보정 유형)을 찾지 못했습니다");
+  
+  const h=A[hi].map(norm);
+  const ix=(...names)=>{for(const nm of names){const i=h.indexOf(nm);if(i>=0)return i}return -1};
+  const g=(r,...names)=>{const i=ix(...names);return i<0?"":(r[i]||"").trim()};
   const t=today0();
-  return A.slice(hi+1).filter(r=>g(r,"code")&&g(r,"담당자")).map(r=>{
-    const served=servedDate(g(r,"송달일")),due=relD(served,g(r,"제출기한")),d1=relD(served,g(r,"연장제출기한1")),d2=relD(served,g(r,"연장제출기한2"));
-    const eff=d2||d1||due,sub=g(r,"제출날짜");
-    return {owner:g(r,"담당자"),pay:g(r,"수임료미납"),status:g(r,"진행상황"),code:g(r,"code"),
-      served:g(r,"송달일"),auto:g(r,"자동송달일"),read:g(r,"열람일"),period:g(r,"기간"),due:g(r,"제출기한"),type:g(r,"보정유형"),sub,
-      e1s:g(r,"연장신청일1"),e1d:g(r,"연장제출기한1"),e2s:g(r,"연장신청일2"),e2d:g(r,"연장제출기한2"),
-      eff,over:!!(eff&&eff<t&&!sub),soon:!!(eff&&eff>=t&&eff-t<=3*D1&&!sub),sd:served?served.getTime():0};
+
+  return A.slice(hi+1).filter(r=>g(r,"code","코드")&&g(r,"담당자")).map(r=>{
+    const finalStr=g(r,"최종제출기한","제출기한");
+    const eff=parseDeadline(finalStr);
+    const sub=g(r,"제출날짜");
+    return {
+      status:g(r,"진행상황"),
+      owner:g(r,"담당자"),
+      code:g(r,"code","코드"),
+      client:g(r,"성명","의뢰인","이름"),
+      type:g(r,"보정유형"),
+      finalStr,
+      eff,
+      over:!!(eff&&eff<t&&!sub),
+      soon:!!(eff&&eff>=t&&eff-t<=3*D1&&!sub)
+    };
   });
 }
-function pill(txt,kind){if(!txt)return "";const c={"완납":"var(--navy)","미완납":"var(--flame)","미완납(개시)":"var(--rust)","시작":"var(--flame)","미열람":"var(--rust)","종료":"var(--oat)"}[txt]||"var(--oat)";return `<span class="pill" style="--c:${c}">${esc(txt)}</span>`}
-function autoCases(){   // 통합_데이터 시트에 보정 사건 목록(개인정보 제외 열)이 있으면 별도 파일 없이 자동으로 표시
+
+function pill(txt){
+  if(!txt)return "";
+  const c={"완납":"var(--navy)","미완납":"var(--flame)","미완납(개시)":"var(--rust)","시작":"var(--flame)","미열람":"var(--rust)","종료":"var(--oat)"}[txt]||"var(--oat)";
+  return `<span class="pill" style="--c:${c}">${esc(txt)}</span>`;
+}
+
+function autoCases(){
   if(CASE_MANUAL||!STATE||!STATE.t||STATE.t===CASE_TXT)return;
   CASE_TXT=STATE.t;
-  if(!/송달일/.test(STATE.t)||!/보정\s*유형/.test(STATE.t))return;
-  try{const c=parseCases(STATE.t);if(c.length){CASES=c;CASE_ERR="";CASE_SRC="통합_데이터 시트 · "+(STATE.live?"실시간":"마지막으로 불러온 데이터")}}catch(e){}
+  if(!/보정\s*유형/.test(STATE.t))return;
+  try{
+    const c=parseCases(STATE.t);
+    if(c.length){
+      CASES=c;
+      CASE_ERR="";
+      CASE_SRC="통합_데이터 시트 · "+(STATE.live?"실시간":"마지막으로 불러온 데이터");
+    }
+  }catch(e){}
 }
+
 function drawCases(){
   const box=document.getElementById("cases");if(!box)return;
   const name=CURNAME;
-  let h=`<h2>보정 사건 현황 <small class="flat" style="font-weight:400;font-size:13px">· 성명·사건번호·비고·법원 제외</small></h2><div class="cc"><label class="fbtn">보정 시트 CSV 열기<input type="file" id="casefile" accept=".csv,text/csv" hidden></label>`;
+  let h=`<h2>보정 사건 현황</h2><div class="cc"><label class="fbtn">보정 시트 CSV 열기<input type="file" id="casefile" accept=".csv,text/csv" hidden></label>`;
   const hasClosed=!!(CASES&&CASES.some(c=>/^(종료|사임|폐지)/.test(c.status)));
   if(CASES&&hasClosed){
     h+=`<button class="chip" data-f="open" aria-pressed="${CASE_FILTER==="open"}">처리 필요(시작·미열람)</button><button class="chip" data-f="all" aria-pressed="${CASE_FILTER==="all"}">전체</button>`;
@@ -872,34 +913,45 @@ function drawCases(){
   h+=`<span class="meta">${CASE_BUSY?"불러오는 중…":esc(CASE_SRC)}</span></div>`;
   if(CASE_ERR)h+=`<div class="msg">${esc(CASE_ERR)}</div>`;
   if(!CASES){
-    if(!CASE_ERR)h+=`<div class="panel"><div class="msg" style="text-align:left">통합_데이터 탭 맨 아래(다른 표와 겹치지 않는 빈 영역)에 아래 수식을 넣으면 ${esc(name)} 님의 보정 사건이 이 화면에 자동으로 나옵니다. 성명·사건번호·비고·메모·법원은 가져오지 않는 수식입니다.<br><code style="display:block;margin-top:8px;font-size:12px;white-space:pre-wrap">=QUERY('보정'!A:W,"select B,C,D,E,H,J,K,L,M,N,O,S,T,U,V,W where H is not null and (C='시작' or C='미열람')",1)</code><span class="meta">또는 위의 '보정 시트 CSV 열기'로 내려받은 파일을 직접 열 수도 있습니다(개인정보 열은 읽지 않음).</span></div></div>`;
+    if(!CASE_ERR)h+=`<div class="panel"><div class="msg">보정 사건 데이터를 불러오지 못했습니다. 상단의 새로고침을 눌러주세요.</div></div>`;
   }else{
     const mine=CASES.filter(c=>c.owner===name),act=mine.filter(c=>!/^(종료|사임|폐지)/.test(c.status));
-    const list=(CASE_FILTER==="open"||!hasClosed?act:mine).slice().sort((a,b)=>(a.eff?a.eff.getTime():9e15)-(b.eff?b.eff.getTime():9e15)||b.sd-a.sd);
+    // 최종제출기한 빠른 순 정렬 (기한이 빈칸인 '결정' 등은 맨 아래로)
+    const list=(CASE_FILTER==="open"||!hasClosed?act:mine).slice().sort((a,b)=>(a.eff?a.eff.getTime():9e15)-(b.eff?b.eff.getTime():9e15));
     const nS=act.filter(c=>c.status==="시작").length,nU=act.filter(c=>c.status==="미열람").length,nO=act.filter(c=>c.over).length;
-    h+=`<div class="kpis"><div class="kpi"><div class="k">처리 필요</div><div class="v">${act.length}건</div></div><div class="kpi"><div class="k">시작</div><div class="v">${nS}건</div></div><div class="kpi"><div class="k">미열람</div><div class="v">${nU}건</div></div><div class="kpi"><div class="k">기한 초과</div><div class="v"><span class="${nO?"down":""}">${nO}건</span></div><div class="cmpk">제출날짜 없이 기한(연장 포함)이 지난 건</div></div>${hasClosed?`<div class="kpi"><div class="k">전체 보정(시트 내)</div><div class="v">${mine.length}건</div></div>`:""}</div>`;
+    
+    h+=`<div class="kpis">
+      <div class="kpi"><div class="k">처리 필요</div><div class="v">${act.length}건</div></div>
+      <div class="kpi"><div class="k">시작</div><div class="v">${nS}건</div></div>
+      <div class="kpi"><div class="k">미열람</div><div class="v">${nU}건</div></div>
+      <div class="kpi"><div class="k">기한 초과</div><div class="v"><span class="${nO?"down":""}">${nO}건</span></div><div class="cmpk">최종 제출기한이 지난 건</div></div>
+      ${hasClosed?`<div class="kpi"><div class="k">전체 보정(시트 내)</div><div class="v">${mine.length}건</div></div>`:""}
+    </div>`;
+
     if(!mine.length)h+=`<div class="panel"><div class="msg">보정 시트에서 담당자가 '${esc(name)}'인 사건을 찾지 못했습니다.</div></div>`;
     else if(!list.length)h+=`<div class="panel"><div class="msg">처리가 필요한 보정이 없습니다.</div></div>`;
     else{
-      const H=["납부 상태","진행 상황","코드","송달일","자동송달일","열람일","기간","제출기한","보정 유형","제출날짜","연장신청일1","연장제출기한1","연장신청일2","연장제출기한2"];
-      const rows=list.map(c=>{const dc=c.over?"r":c.soon?"r":"";
-        return `<tr><td>${pill(c.pay)}</td><td>${pill(c.status)}</td><td>${esc(c.code)}</td><td>${esc(c.served)}</td><td>${esc(c.auto)}</td><td>${esc(c.read)}</td><td>${esc(c.period)}</td><td class="${dc}">${esc(c.due)}${c.over?" ·초과":""}</td><td>${esc(c.type)}</td><td>${esc(c.sub)}</td><td>${esc(c.e1s)}</td><td class="${c.e1d&&c.over&&!c.e2d?"r":""}">${esc(c.e1d)}</td><td>${esc(c.e2s)}</td><td class="${c.e2d&&c.over?"r":""}">${esc(c.e2d)}</td></tr>`}).join("");
-      h+=`<div class="panel"><div class="tbl"><table class="ct"><thead><tr>${H.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div><div class="legend"><span>제출기한이 빠른 순입니다. 붉은 글씨는 기한이 지났거나 3일 이내(연장 신청이 있으면 마지막 연장 제출기한 기준)이고, 제출날짜가 있으면 제외합니다. 날짜에 연도가 없어 송달일 기준으로 계산했습니다.</span></div></div>`;
+      const H=["진행상황","담당자","코드","성명","보정유형","최종제출기한"];
+      const rows=list.map(c=>{
+        const dc=(c.over||c.soon)?"r":"";
+        return `<tr>
+          <td>${pill(c.status)}</td>
+          <td>${esc(c.owner)}</td>
+          <td>${esc(c.code)}</td>
+          <td>${esc(c.client)}</td>
+          <td>${esc(c.type)}</td>
+          <td class="${dc}">${esc(c.finalStr)}${c.over?" ·초과":""}</td>
+        </tr>`;
+      }).join("");
+      h+=`<div class="panel"><div class="tbl"><table class="ct"><thead><tr>${H.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div><div class="legend"><span>최종 제출기한이 빠른 순으로 정렬됩니다. 붉은 글씨는 기한이 지났거나 3일 이내 임박한 건입니다.</span></div></div>`;
     }
   }
   box.innerHTML=h;
   box.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{CASE_FILTER=b.dataset.f;drawCases()});
-    const fi=box.querySelector("#casefile");
+  const fi=box.querySelector("#casefile");
   if(fi)fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
     rd.onload=()=>{CASE_MANUAL=true;try{CASES=parseCases(String(rd.result).replace(/^\uFEFF/,""));CASE_SRC="CSV 파일: "+f.name+" · 내 컴퓨터에서만 읽음";CASE_ERR=""}catch(err){CASES=null;CASE_ERR=err.message}drawCases()};
     rd.readAsText(f,"utf-8")};
-}
-async function loadCases(){
-  if(!FIX_CSV_URL)return;
-  CASE_BUSY=true;drawCases();
-  try{CASES=parseCases(await fetchOnce(FIX_CSV_URL,30000));CASE_SRC="시트 연결 · "+new Date().toLocaleString("ko-KR");CASE_ERR=""}
-  catch(e){CASE_ERR="보정 시트에 연결하지 못했습니다 ("+e.message+"). CSV 파일 열기로 불러와 주세요."}
-  CASE_BUSY=false;drawCases();
 }
 
 /* ===== 화면 ===== */
